@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/messages_viewmodel.dart';
+import 'chat_page.dart';
+import '../viewmodels/chat_viewmodel.dart';
 
 class MessagesPage extends StatelessWidget {
   final MessagesViewModel viewModel;
-  const MessagesPage({super.key, this.viewModel = const MessagesViewModel()});
+  final void Function(MessageSummary)? onOpenChat;
+  const MessagesPage({
+    super.key,
+    this.viewModel = const MessagesViewModel(),
+    this.onOpenChat,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +23,18 @@ class MessagesPage extends StatelessWidget {
             decoration: InputDecoration(
               hintText: 'Search messages',
               prefixIcon: const Icon(Icons.search),
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
+              ),
               isDense: true,
             ),
           ),
@@ -25,67 +43,14 @@ class MessagesPage extends StatelessWidget {
           child: ListView.separated(
             itemCount: viewModel.items.length,
             separatorBuilder: (_, __) => Divider(
-              height: 1,
+              height: 0,
               thickness: 0.5,
-              color: cs.outlineVariant.withValues(alpha: 0.4),
+              indent: 0,
+              color: cs.outlineVariant.withValues(alpha: 0.2),
             ),
             itemBuilder: (context, index) {
               final item = viewModel.items[index];
-              return SizedBox(
-                height: 80,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      const CircleAvatar(radius: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  item.time,
-                                  style: TextStyle(color: cs.onSurfaceVariant),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item.message,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(color: cs.onSurfaceVariant),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                _ReadMarkIcon(mark: item.mark),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              return _MessageItem(item: item, onOpenChat: onOpenChat);
             },
           ),
         ),
@@ -106,5 +71,143 @@ class _ReadMarkIcon extends StatelessWidget {
       case ReadMark.doubleGreen:
         return const Icon(Icons.done_all, color: Colors.green, size: 18);
     }
+  }
+}
+
+class _MessageItem extends StatefulWidget {
+  final MessageSummary item;
+  final void Function(MessageSummary)? onOpenChat;
+  const _MessageItem({required this.item, this.onOpenChat});
+
+  @override
+  State<_MessageItem> createState() => _MessageItemState();
+}
+
+class _MessageItemState extends State<_MessageItem> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final item = widget.item;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Container(
+        color: _hover ? Colors.grey.withValues(alpha: 0.12) : Colors.transparent,
+        height: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: InkWell(
+          onTap: () {
+            if (widget.onOpenChat != null) {
+              widget.onOpenChat!(item);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatPage(viewModel: ChatViewModel.groupChat())
+                ),
+              );
+            }
+          },
+          child: Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const CircleAvatar(radius: 24),
+                  if (item.isOnline)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: cs.surface,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (item.retentionLabel != null && item.retentionColor != null) ...[
+                          const SizedBox(width: 8),
+                          _RetentionChip(label: item.retentionLabel!, color: item.retentionColor!),
+                        ],
+                        const SizedBox(width: 8),
+                        Text(
+                          item.time,
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.message,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _ReadMarkIcon(mark: item.mark),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RetentionChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _RetentionChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = color.withValues(alpha: 0.15);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12),
+      ),
+    );
   }
 }

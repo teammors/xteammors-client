@@ -6,6 +6,8 @@ import 'views/contacts_page.dart';
 import 'views/ai_page.dart';
 import 'views/settings_page.dart';
 import 'views/workspace_blank.dart';
+import 'views/chat_page.dart';
+import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
 import 'viewmodels/theme_viewmodel.dart';
 
@@ -63,7 +65,14 @@ class _MainShellState extends State<MainShell> {
   Widget _pageForIndex(int index) {
     switch (index) {
       case 0:
-        return const MessagesPage();
+        return MessagesPage(
+          onOpenChat: _isDesktop
+              ? (summary) => setState(
+                    () => _rightPane =
+                        ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
+                  )
+              : null,
+        );
       case 1:
         return const ContactsPage();
       case 2:
@@ -101,7 +110,9 @@ class _MainShellState extends State<MainShell> {
                 width: leftWidth,
                 child: Scaffold(
                   appBar: AppBar(
-                      centerTitle: false, title: Text(_titles[_selectedIndex],style: TextStyle(fontSize: 18))),
+                      centerTitle: false,
+                      title: Text(_titles[_selectedIndex],
+                          style: TextStyle(fontSize: 18))),
                   body: _pageForIndex(_selectedIndex),
                   bottomNavigationBar: NavigationBarTheme(
                     data: NavigationBarThemeData(
@@ -177,7 +188,9 @@ class _MainShellState extends State<MainShell> {
     }
 
     return Scaffold(
-      appBar: AppBar(centerTitle: false, title: Text(_titles[_selectedIndex],style: TextStyle(fontSize: 18))),
+      appBar: AppBar(
+          centerTitle: false,
+          title: Text(_titles[_selectedIndex], style: TextStyle(fontSize: 18))),
       body: _pageForIndex(_selectedIndex),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
