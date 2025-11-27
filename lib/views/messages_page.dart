@@ -17,6 +17,11 @@ class MessagesPage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Column(
       children: [
+        Padding(padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+        child: Container(
+          height: 50,
+          color: Colors.white,
+        ),),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(

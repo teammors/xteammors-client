@@ -16,6 +16,11 @@ class SettingsPage extends StatelessWidget {
     return SafeArea(
       child: ListView(
         children: [
+          Padding(padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Container(
+              height: 56,
+              color: Colors.white,
+            ),),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
