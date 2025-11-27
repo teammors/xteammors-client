@@ -7,6 +7,8 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
+import '../utils/web_download_stub.dart'
+    if (dart.library.html) '../utils/web_download.dart' as web_dl;
 import 'package:gallery_saver/gallery_saver.dart';
 import '../utils/toast_utils.dart';
 import '../viewmodels/chat_viewmodel.dart';
@@ -71,15 +73,22 @@ class _ChatPageState extends State<ChatPage> {
 
   void _openVideo(String? url) {
     if (url == null) return;
-    final isDesktop = !kIsWeb &&
+    final urls = widget.viewModel.messages
+        .where((m) => m.type == MessageType.video && m.videoUrl != null)
+        .map((m) => m.videoUrl!)
+        .toList();
+    final startIndex = urls.indexOf(url);
+    final useDialog = kIsWeb ||
         (defaultTargetPlatform == TargetPlatform.macOS ||
             defaultTargetPlatform == TargetPlatform.windows ||
             defaultTargetPlatform == TargetPlatform.linux);
-    if (isDesktop) {
+    if (useDialog) {
       showDialog(
         context: context,
         barrierDismissible: true,
-        builder: (_) => _VideoPlayerDialog(url: url),
+        barrierColor: Colors.black.withValues(alpha: 0.7),
+        builder: (_) => _VideoPlayerDialog(
+            urls: urls, initialIndex: startIndex >= 0 ? startIndex : 0),
       );
     } else {
       Navigator.of(context)
@@ -94,14 +103,15 @@ class _ChatPageState extends State<ChatPage> {
         .map((m) => m.imageUrl!)
         .toList();
     final startIndex = urls.indexOf(url);
-    final isDesktop = !kIsWeb &&
+    final useDialog = kIsWeb ||
         (defaultTargetPlatform == TargetPlatform.macOS ||
             defaultTargetPlatform == TargetPlatform.windows ||
             defaultTargetPlatform == TargetPlatform.linux);
-    if (isDesktop) {
+    if (useDialog) {
       showDialog(
         context: context,
         barrierDismissible: true,
+        barrierColor: Colors.black.withValues(alpha: 0.7),
         builder: (_) => _ImageViewerDialog(
             urls: urls, initialIndex: startIndex >= 0 ? startIndex : 0),
       );
@@ -1363,26 +1373,30 @@ class _StatusIcon extends StatelessWidget {
 }
 
 class _VideoPlayerDialog extends StatefulWidget {
-  final String url;
-  const _VideoPlayerDialog({required this.url});
+  final List<String> urls;
+  final int initialIndex;
+  const _VideoPlayerDialog({required this.urls, required this.initialIndex});
 
   @override
   State<_VideoPlayerDialog> createState() => _VideoPlayerDialogState();
 }
 
 class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
-  late final VideoPlayerController _controller;
+  late VideoPlayerController _controller;
   bool _ready = false;
   bool _isPlaying = true;
+  late int _index;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        setState(() => _ready = true);
-        _controller.play();
-      });
+    _index = widget.initialIndex;
+    _controller =
+        VideoPlayerController.networkUrl(Uri.parse(widget.urls[_index]))
+          ..initialize().then((_) {
+            setState(() => _ready = true);
+            _controller.play();
+          });
   }
 
   @override
@@ -1395,6 +1409,7 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.transparent,
       child: Stack(
         children: [
           AspectRatio(
@@ -1402,6 +1417,53 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
             child: _ready
                 ? VideoPlayer(_controller)
                 : const Center(child: CircularProgressIndicator()),
+          ),
+          Positioned(
+            left: 8,
+            bottom: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left, color: Colors.white),
+              onPressed: () async {
+                final prev =
+                    (_index - 1 + widget.urls.length) % widget.urls.length;
+                await _controller.pause();
+                _controller.dispose();
+                setState(() {
+                  _ready = false;
+                  _isPlaying = true;
+                  _index = prev;
+                  _controller = VideoPlayerController.networkUrl(
+                      Uri.parse(widget.urls[_index]))
+                    ..initialize().then((_) {
+                      setState(() => _ready = true);
+                      _controller.play();
+                    });
+                });
+              },
+            ),
+          ),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right, color: Colors.white),
+              onPressed: () async {
+                final next = (_index + 1) % widget.urls.length;
+                await _controller.pause();
+                _controller.dispose();
+                setState(() {
+                  _ready = false;
+                  _isPlaying = true;
+                  _index = next;
+                  _controller = VideoPlayerController.networkUrl(
+                      Uri.parse(widget.urls[_index]))
+                    ..initialize().then((_) {
+                      setState(() => _ready = true);
+                      _controller.play();
+                    });
+                });
+              },
+            ),
           ),
           Positioned(
             top: 8,
@@ -1444,7 +1506,25 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
 
   Future<void> _downloadToDesktop() async {
     try {
-      final uri = Uri.parse(widget.url);
+      if (kIsWeb) {
+        final uri = Uri.parse(widget.urls[_index]);
+        final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        final dot = last.lastIndexOf('.');
+        String ext = 'mp4';
+        if (dot != -1 && dot + 1 < last.length) {
+          final e = last.substring(dot + 1).toLowerCase();
+          if (e.isNotEmpty && e.length <= 5) ext = e;
+        }
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final ok = await web_dl.triggerWebDownload(
+            widget.urls[_index], 'video_$ts.$ext');
+        if (!ok && mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Download failed')));
+        }
+        return;
+      }
+      final uri = Uri.parse(widget.urls[_index]);
       final client = HttpClient();
       final req = await client.getUrl(uri);
       final resp = await req.close();
@@ -1524,6 +1604,24 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
 
   Future<void> _downloadCurrent() async {
     try {
+      if (kIsWeb) {
+        final uri = Uri.parse(widget.urls[_index]);
+        final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        final dot = last.lastIndexOf('.');
+        String ext = 'jpg';
+        if (dot != -1 && dot + 1 < last.length) {
+          final e = last.substring(dot + 1).toLowerCase();
+          if (e.isNotEmpty && e.length <= 5) ext = e;
+        }
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final ok = await web_dl.triggerWebDownload(
+            widget.urls[_index], 'image_$ts.$ext');
+        if (!ok && mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Download failed')));
+        }
+        return;
+      }
       final uri = Uri.parse(widget.urls[_index]);
       final client = HttpClient();
       final resp = await (await client.getUrl(uri)).close();
@@ -1581,6 +1679,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.transparent,
       child: Stack(
         children: [
           Padding(
