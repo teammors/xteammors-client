@@ -26,6 +26,13 @@ class _ChatPageState extends State<ChatPage> {
         _hasText = _textController.text.isNotEmpty;
       });
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        try {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        } catch (_) {}
+      }
+    });
   }
 
   @override
