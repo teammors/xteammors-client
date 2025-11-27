@@ -13,6 +13,19 @@ class _ThemeSettingsPageState extends State<ThemeSettingsPage> {
   AppTheme _selected = AppTheme.dark;
 
   @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final t = await ThemeViewModel.loadTheme();
+    if (t != null) {
+      setState(() => _selected = t);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Theme Settings')),

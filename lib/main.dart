@@ -27,6 +27,21 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
   bool _dark = false;
 
   @override
+  void initState() {
+    super.initState();
+    _bootstrapTheme();
+  }
+
+  Future<void> _bootstrapTheme() async {
+    final t = await ThemeViewModel.loadTheme();
+    if (t != null) {
+      setState(() {
+        _dark = t == AppTheme.dark;
+      });
+    }
+  }
+
+  @override
   void setTheme({required bool dark}) {
     setState(() {
       _dark = dark;
@@ -117,7 +132,10 @@ class _MainShellState extends State<MainShell> {
                   bottomNavigationBar: NavigationBarTheme(
                     data: NavigationBarThemeData(
                       height: 50,
-                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.08),
                     ),
                     child: NavigationBar(
                       labelBehavior:

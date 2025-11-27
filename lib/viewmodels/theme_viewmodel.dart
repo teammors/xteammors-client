@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum AppTheme { dark, light }
 
@@ -8,6 +9,7 @@ class ThemeViewModel {
 
   static const Color primary = Color(0xFF23619E);
   static const Color secondary = Color(0xFFC4CCD8);
+  static const String cacheKey = 'app_theme_mode';
 
   ThemeData get lightTheme => ThemeData(
     colorScheme: const ColorScheme.light(
@@ -34,6 +36,19 @@ class ThemeViewModel {
         state?.setTheme(dark: false);
         break;
     }
+    saveTheme(theme);
+  }
+
+  static Future<void> saveTheme(AppTheme theme) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(cacheKey, theme == AppTheme.dark ? 'dark' : 'light');
+  }
+
+  static Future<AppTheme?> loadTheme() async {
+    final p = await SharedPreferences.getInstance();
+    final v = p.getString(cacheKey);
+    if (v == null) return null;
+    return v == 'dark' ? AppTheme.dark : AppTheme.light;
   }
 }
 

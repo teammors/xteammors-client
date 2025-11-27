@@ -200,6 +200,9 @@ class _ChatPageState extends State<ChatPage> {
                         chatType: widget.viewModel.chatType,
                         isSelected: isSelected,
                         onTap: () => _toggleMessageSelection(index),
+                        onShowMenu: (context, tapPosition) {
+                          _showMessageMenu(context, index, tapPosition);
+                        },
                       );
                     },
                   ),
@@ -218,6 +221,167 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
   }
+
+  void _showMessageMenu(BuildContext context, int index, Offset tapPosition) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        tapPosition,
+        tapPosition,
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    setState(() {
+      if (!_selectedMessages.contains(index)) {
+        _selectedMessages.add(index);
+      }
+    });
+
+    showMenu(
+      context: context,
+      position: position,
+      items: [
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.reply_all_outlined,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Reply',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 回复消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.edit_calendar_outlined,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Edit',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 编辑消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.translate_sharp,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Translate',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 翻译消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.content_copy,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Copy',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 复制消息逻辑
+            final message = widget.viewModel.messages[index];
+            if (message.text != null) {
+              // 复制文本到剪贴板
+            }
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.forward_to_inbox_sharp,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Forward',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 转发消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.filter,
+                  size: 16, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Select',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 多选消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.star_border,
+                  size: 18, color: Theme.of(context).colorScheme.onSurface),
+              const SizedBox(width: 12),
+              Text('Add to Saved',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          onTap: () {
+            // 收藏消息逻辑
+          },
+        ),
+        PopupMenuItem(
+          height: 34,
+          child: Row(
+            children: [
+              Icon(Icons.delete, size: 18, color: Colors.red),
+              const SizedBox(width: 12),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+          onTap: () {
+            // 删除消息逻辑
+          },
+        ),
+      ],
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ).then((value) {
+      // 菜单关闭后的处理
+      _clearSelection();
+    });
+  }
 }
 
 class _ChatBubble extends StatelessWidget {
@@ -226,6 +390,7 @@ class _ChatBubble extends StatelessWidget {
   final ChatType chatType;
   final bool isSelected;
   final VoidCallback onTap;
+  final Function(BuildContext, Offset) onShowMenu;
 
   const _ChatBubble({
     required this.message,
@@ -233,7 +398,16 @@ class _ChatBubble extends StatelessWidget {
     required this.chatType,
     required this.isSelected,
     required this.onTap,
+    required this.onShowMenu,
   });
+
+  void _handleRightClick(BuildContext context, TapDownDetails details) {
+    onShowMenu(context, details.globalPosition);
+  }
+
+  void _handleDoubleTap() {
+    // 双击消息逻辑，比如快速回复或快速反应
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -261,12 +435,17 @@ class _ChatBubble extends StatelessWidget {
 
     return GestureDetector(
       onLongPress: onTap,
+      onDoubleTap: _handleDoubleTap,
+      onTapDown: (details) => _handleRightClick(context, details),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
           color: isSelected
-              ? (isDark ? Colors.white24 : Colors.black12)
+              ? (isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.08))
               : Colors.transparent,
         ),
         child: Row(
@@ -311,7 +490,7 @@ class _ChatBubble extends StatelessWidget {
                                   horizontal: 12, vertical: 8)),
                       decoration: BoxDecoration(
                         color: bubbleColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(5),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
