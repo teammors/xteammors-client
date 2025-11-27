@@ -55,8 +55,30 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
       child: MaterialApp(
         title: 'Xteammors',
         debugShowCheckedModeBanner: false,
-        theme: _themeVM.lightTheme,
-        darkTheme: _themeVM.darkTheme,
+        theme: _themeVM.lightTheme.copyWith(
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0,
+            titleTextStyle: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        darkTheme: _themeVM.darkTheme.copyWith(
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.grey[900],
+            foregroundColor: Colors.white,
+            elevation: 0,
+            titleTextStyle: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ),
         themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
         home: const MainShell(),
       ),
@@ -84,9 +106,9 @@ class _MainShellState extends State<MainShell> {
         return MessagesPage(
           onOpenChat: _isDesktop
               ? (summary) => setState(
-                    () => _rightPane =
-                        ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
-                  )
+                () => _rightPane =
+                ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
+          )
               : null,
         );
       case 1:
@@ -127,9 +149,14 @@ class _MainShellState extends State<MainShell> {
                 width: leftWidth,
                 child: Scaffold(
                   appBar: AppBar(
-                      centerTitle: false,
-                      title: Text(_titles[_selectedIndex],
-                          style: TextStyle(fontSize: 18))),
+                    centerTitle: false,
+                    backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+                    foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+                    title: Text(
+                      _titles[_selectedIndex],
+                      style: Theme.of(context).appBarTheme.titleTextStyle,
+                    ),
+                  ),
                   body: _pageForIndex(_selectedIndex),
                   bottomNavigationBar: NavigationBarTheme(
                     data: NavigationBarThemeData(
@@ -141,9 +168,9 @@ class _MainShellState extends State<MainShell> {
                       indicatorColor: isDark
                           ? Colors.white.withValues(alpha: 0.3)
                           : Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withValues(alpha: 0.5),
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.5),
                       iconTheme: MaterialStateProperty.resolveWith((states) {
                         if (states.contains(MaterialState.selected)) {
                           return IconThemeData(
@@ -153,12 +180,12 @@ class _MainShellState extends State<MainShell> {
                         }
                         return IconThemeData(
                             color:
-                                isDark ? Colors.grey[500] : Colors.grey[700]);
+                            isDark ? Colors.grey[500] : Colors.grey[700]);
                       }),
                     ),
                     child: NavigationBar(
                       labelBehavior:
-                          NavigationDestinationLabelBehavior.alwaysHide,
+                      NavigationDestinationLabelBehavior.alwaysHide,
                       selectedIndex: _selectedIndex,
                       destinations: const [
                         NavigationDestination(
@@ -226,14 +253,20 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       appBar: AppBar(
-          centerTitle: false,
-          title: Text(_titles[_selectedIndex], style: TextStyle(fontSize: 18))),
+        centerTitle: false,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        title: Text(
+          _titles[_selectedIndex],
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      ),
       body: _pageForIndex(_selectedIndex),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           height: 56,
           backgroundColor:
-              Theme.of(context).colorScheme.surfaceContainerHighest,
+          Theme.of(context).colorScheme.surfaceContainerHighest,
           indicatorColor: isDark
               ? Colors.white.withValues(alpha: 0.18)
               : Colors.black.withValues(alpha: 0.08),
