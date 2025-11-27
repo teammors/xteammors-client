@@ -113,6 +113,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isDesktop) {
       const dividerWidth = 0.5;
       return LayoutBuilder(
@@ -137,6 +138,23 @@ class _MainShellState extends State<MainShell> {
                           .colorScheme
                           .primary
                           .withValues(alpha: 0.08),
+                      indicatorColor: isDark
+                          ? Colors.white.withValues(alpha: 0.3)
+                          : Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withValues(alpha: 0.5),
+                      iconTheme: MaterialStateProperty.resolveWith((states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return IconThemeData(
+                              color: isDark
+                                  ? Colors.white
+                                  : Colors.white);
+                        }
+                        return IconThemeData(
+                            color:
+                                isDark ? Colors.grey[500] : Colors.grey[700]);
+                      }),
                     ),
                     child: NavigationBar(
                       labelBehavior:
@@ -144,7 +162,10 @@ class _MainShellState extends State<MainShell> {
                       selectedIndex: _selectedIndex,
                       destinations: const [
                         NavigationDestination(
-                            icon: Icon(Icons.chat_bubble_outline), label: ''),
+                            icon: Icon(
+                              Icons.chat_bubble_outline,
+                            ),
+                            label: ''),
                         NavigationDestination(
                             icon: Icon(Icons.people_outline), label: ''),
                         NavigationDestination(
@@ -183,7 +204,7 @@ class _MainShellState extends State<MainShell> {
                       color: Theme.of(context)
                           .colorScheme
                           .outlineVariant
-                          .withValues(alpha: 0.3),
+                          .withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -213,6 +234,19 @@ class _MainShellState extends State<MainShell> {
           height: 56,
           backgroundColor:
               Theme.of(context).colorScheme.surfaceContainerHighest,
+          indicatorColor: isDark
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.black.withValues(alpha: 0.08),
+          iconTheme: MaterialStateProperty.resolveWith((states) {
+            if (states.contains(MaterialState.selected)) {
+              return IconThemeData(
+                  color: isDark
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.primary);
+            }
+            return IconThemeData(
+                color: isDark ? Colors.grey[500] : Colors.grey[700]);
+          }),
         ),
         child: NavigationBar(
           labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
