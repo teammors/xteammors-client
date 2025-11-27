@@ -94,7 +94,7 @@ class _MessageItemState extends State<_MessageItem> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Container(
-        color: _hover ? Colors.grey.withValues(alpha: 0.12) : Colors.transparent,
+        color: _hover ? cs.surfaceContainerHighest.withValues(alpha: 0.12) : Colors.transparent,
         height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: InkWell(

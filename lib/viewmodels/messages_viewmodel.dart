@@ -14,6 +14,7 @@ class MessageSummary {
   final RetentionPolicy? retention;
   final String? retentionLabel;
   final Color? retentionColor;
+  final bool isGroup;
   const MessageSummary({
     required this.name,
     required this.message,
@@ -23,6 +24,7 @@ class MessageSummary {
     this.retention,
     this.retentionLabel,
     this.retentionColor,
+    this.isGroup = false,
   });
 }
 
@@ -38,8 +40,9 @@ class MessagesViewModel {
         mark: ReadMark.doubleGreen,
         isOnline: true,
         retention: RetentionPolicy.hour1,
-        retentionLabel: '1H',
+        retentionLabel: 'H',
         retentionColor: const Color(0xFFC95332),
+        isGroup: false,
       ),
       MessageSummary(
         name: 'Bob',
@@ -48,8 +51,9 @@ class MessagesViewModel {
         mark: ReadMark.singleGrey,
         isOnline: false,
         retention: RetentionPolicy.week2,
-        retentionLabel: '2W',
+        retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
+        isGroup: false,
       ),
       MessageSummary(
         name: 'Charlie',
@@ -58,8 +62,9 @@ class MessagesViewModel {
         mark: ReadMark.doubleGreen,
         isOnline: true,
         retention: RetentionPolicy.month3,
-        retentionLabel: '1M',
+        retentionLabel: 'M',
         retentionColor: const Color(0xFFF2D863),
+        isGroup: false,
       ),
       MessageSummary(
         name: 'Design Team',
@@ -68,8 +73,9 @@ class MessagesViewModel {
         mark: ReadMark.singleGrey,
         isOnline: false,
         retention: RetentionPolicy.week2,
-        retentionLabel: '1W',
+        retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
+        isGroup: true,
       ),
     ],
   });

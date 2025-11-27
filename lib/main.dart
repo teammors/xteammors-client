@@ -117,10 +117,7 @@ class _MainShellState extends State<MainShell> {
                   bottomNavigationBar: NavigationBarTheme(
                     data: NavigationBarThemeData(
                       height: 50,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.08),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                     ),
                     child: NavigationBar(
                       labelBehavior:
