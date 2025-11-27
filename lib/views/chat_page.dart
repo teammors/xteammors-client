@@ -121,6 +121,83 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  Future<void> _downloadFile(String? url, String? name) async {
+    if (url == null) return;
+    try {
+      if (kIsWeb) {
+        final uri = Uri.parse(url);
+        final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        final dot = last.lastIndexOf('.');
+        String ext = 'dat';
+        if (dot != -1 && dot + 1 < last.length) {
+          final e = last.substring(dot + 1).toLowerCase();
+          if (e.isNotEmpty && e.length <= 8) ext = e;
+        }
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final fname = (name ?? 'file') + '_$ts.$ext';
+        final ok = await web_dl.triggerWebDownload(url, fname);
+        if (!ok) {
+          ToastUtils.showTopToast(
+            context: context,
+            message: 'Download failed',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            icon: Icons.info_outline,
+          );
+        }
+        return;
+      }
+
+      final uri = Uri.parse(url);
+      final client = HttpClient();
+      final resp = await (await client.getUrl(uri)).close();
+      if (resp.statusCode != 200) {
+
+        ToastUtils.showTopToast(
+          context: context,
+          message: 'Download failed',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          icon: Icons.info_outline,
+        );
+        return;
+      }
+      final bytes =
+          await resp.fold<List<int>>(<int>[], (acc, data) => acc..addAll(data));
+      final downloadsDir = await getDownloadsDirectory();
+      final baseDir = downloadsDir?.path ??
+          (Platform.environment['HOME'] != null
+              ? '${Platform.environment['HOME']}/Downloads'
+              : (await getTemporaryDirectory()).path);
+      final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+      final dot = last.lastIndexOf('.');
+      String ext = 'dat';
+      if (dot != -1 && dot + 1 < last.length) {
+        final e = last.substring(dot + 1).toLowerCase();
+        if (e.isNotEmpty && e.length <= 8) ext = e;
+      }
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final fname = (name ?? 'file') + '_$ts.$ext';
+      final file = File('$baseDir/$fname');
+      await file.writeAsBytes(bytes);
+      ToastUtils.showTopToast(
+        context: context,
+        message: 'File saved to downlads',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        icon: Icons.info_outline,
+      );
+    } catch (_) {
+      ToastUtils.showTopToast(
+        context: context,
+        message: 'Download failed',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        icon: Icons.info_outline,
+      );
+    }
+  }
+
   Future<void> _initRecorder() async {
     try {
       final hasPermission = await _recorder.hasPermission();
@@ -380,6 +457,7 @@ class _ChatPageState extends State<ChatPage> {
                         onVoiceTap: () => _togglePlayVoice(index),
                         onVideoTap: () => _openVideo(m.videoUrl),
                         onImageTap: () => _openImageViewer(m.imageUrl),
+                        onFileTap: () => _downloadFile(m.fileUrl, m.fileName),
                       );
                     },
                   ),
@@ -616,6 +694,7 @@ class _ChatBubble extends StatelessWidget {
   final VoidCallback? onVoiceTap;
   final VoidCallback? onVideoTap;
   final VoidCallback? onImageTap;
+  final VoidCallback? onFileTap;
 
   const _ChatBubble({
     required this.message,
@@ -628,6 +707,7 @@ class _ChatBubble extends StatelessWidget {
     this.onVoiceTap,
     this.onVideoTap,
     this.onImageTap,
+    this.onFileTap,
   });
 
   void _handleDoubleTap(BuildContext context) {
@@ -733,7 +813,8 @@ class _ChatBubble extends StatelessWidget {
                               isVoicePlaying: isVoicePlaying,
                               onVoiceTap: onVoiceTap,
                               onVideoTap: onVideoTap,
-                              onImageTap: onImageTap),
+                              onImageTap: onImageTap,
+                              onFileTap: onFileTap),
                         ],
                       ),
                     ),
@@ -794,7 +875,8 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
     {bool isVoicePlaying = false,
     VoidCallback? onVoiceTap,
     VoidCallback? onVideoTap,
-    VoidCallback? onImageTap}) {
+    VoidCallback? onImageTap,
+    VoidCallback? onFileTap}) {
   switch (m.type) {
     case MessageType.text:
       return Text(m.text ?? '',
@@ -935,25 +1017,28 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
         ),
       );
     case MessageType.file:
-      return Container(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.insert_drive_file, size: 24, color: textColor),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(m.fileName ?? 'File',
-                    style: TextStyle(color: textColor, fontSize: 14)),
-                if (m.fileSize != null)
-                  Text(m.fileSize!,
-                      style: TextStyle(
-                          color: textColor.withOpacity(0.7), fontSize: 12)),
-              ],
-            ),
-          ],
+      return InkWell(
+        onTap: onFileTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.insert_drive_file, size: 24, color: textColor),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(m.fileName ?? 'File',
+                      style: TextStyle(color: textColor, fontSize: 14)),
+                  if (m.fileSize != null)
+                    Text(m.fileSize!,
+                        style: TextStyle(
+                            color: textColor.withOpacity(0.7), fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
         ),
       );
   }
@@ -1419,53 +1504,6 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
                 : const Center(child: CircularProgressIndicator()),
           ),
           Positioned(
-            left: 8,
-            bottom: 8,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_left, color: Colors.white),
-              onPressed: () async {
-                final prev =
-                    (_index - 1 + widget.urls.length) % widget.urls.length;
-                await _controller.pause();
-                _controller.dispose();
-                setState(() {
-                  _ready = false;
-                  _isPlaying = true;
-                  _index = prev;
-                  _controller = VideoPlayerController.networkUrl(
-                      Uri.parse(widget.urls[_index]))
-                    ..initialize().then((_) {
-                      setState(() => _ready = true);
-                      _controller.play();
-                    });
-                });
-              },
-            ),
-          ),
-          Positioned(
-            right: 8,
-            bottom: 8,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_right, color: Colors.white),
-              onPressed: () async {
-                final next = (_index + 1) % widget.urls.length;
-                await _controller.pause();
-                _controller.dispose();
-                setState(() {
-                  _ready = false;
-                  _isPlaying = true;
-                  _index = next;
-                  _controller = VideoPlayerController.networkUrl(
-                      Uri.parse(widget.urls[_index]))
-                    ..initialize().then((_) {
-                      setState(() => _ready = true);
-                      _controller.play();
-                    });
-                });
-              },
-            ),
-          ),
-          Positioned(
             top: 8,
             right: 8,
             child: Row(
@@ -1497,6 +1535,55 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
                   },
                 ),
               ],
+            ),
+          ),
+          Positioned(
+            left: 8,
+            bottom: 8,
+            child: IconButton(
+              icon:
+                  const Icon(Icons.chevron_left, color: Colors.white, size: 28),
+              onPressed: () async {
+                final prev =
+                    (_index - 1 + widget.urls.length) % widget.urls.length;
+                await _controller.pause();
+                _controller.dispose();
+                setState(() {
+                  _ready = false;
+                  _isPlaying = true;
+                  _index = prev;
+                  _controller = VideoPlayerController.networkUrl(
+                      Uri.parse(widget.urls[_index]))
+                    ..initialize().then((_) {
+                      setState(() => _ready = true);
+                      _controller.play();
+                    });
+                });
+              },
+            ),
+          ),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right,
+                  color: Colors.white, size: 28),
+              onPressed: () async {
+                final next = (_index + 1) % widget.urls.length;
+                await _controller.pause();
+                _controller.dispose();
+                setState(() {
+                  _ready = false;
+                  _isPlaying = true;
+                  _index = next;
+                  _controller = VideoPlayerController.networkUrl(
+                      Uri.parse(widget.urls[_index]))
+                    ..initialize().then((_) {
+                      setState(() => _ready = true);
+                      _controller.play();
+                    });
+                });
+              },
             ),
           ),
         ],
