@@ -947,11 +947,103 @@ class _ChatInput extends StatelessWidget {
         ),
         child: Row(
           children: [
-            IconButton(
-              icon: Icon(Icons.attach_file,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  size: 20),
-              onPressed: () {},
+            Builder(
+              builder: (btnCtx) {
+                return IconButton(
+                  icon: Icon(Icons.attach_file,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      size: 20),
+                  onPressed: () {
+                    final overlay = Overlay.of(btnCtx)
+                        .context
+                        .findRenderObject() as RenderBox;
+                    final box = btnCtx.findRenderObject() as RenderBox;
+                    final offset = box.localToGlobal(Offset.zero);
+                    final rect = Rect.fromLTWH(
+                        offset.dx, offset.dy, box.size.width, box.size.height);
+                    showMenu(
+                      context: btnCtx,
+                      position: RelativeRect.fromRect(
+                          rect, Offset.zero & overlay.size),
+                      items: [
+                        PopupMenuItem(
+                          height: 34,
+                          child: Row(children: [
+                            Icon(Icons.image_outlined,
+                                size: 16,
+                                color: Theme.of(btnCtx).colorScheme.onSurface),
+                            const SizedBox(width: 12),
+                            Text('Images',
+                                style: TextStyle(
+                                    color: Theme.of(btnCtx)
+                                        .colorScheme
+                                        .onSurface)),
+                          ]),
+                        ),
+                        PopupMenuItem(
+                          height: 34,
+                          child: Row(children: [
+                            Icon(Icons.videocam_outlined,
+                                size: 16,
+                                color: Theme.of(btnCtx).colorScheme.onSurface),
+                            const SizedBox(width: 12),
+                            Text('Videos',
+                                style: TextStyle(
+                                    color: Theme.of(btnCtx)
+                                        .colorScheme
+                                        .onSurface)),
+                          ]),
+                        ),
+                        PopupMenuItem(
+                          height: 34,
+                          child: Row(children: [
+                            Icon(Icons.insert_drive_file_outlined,
+                                size: 16,
+                                color: Theme.of(btnCtx).colorScheme.onSurface),
+                            const SizedBox(width: 12),
+                            Text('Files',
+                                style: TextStyle(
+                                    color: Theme.of(btnCtx)
+                                        .colorScheme
+                                        .onSurface)),
+                          ]),
+                        ),
+                        PopupMenuItem(
+                          height: 34,
+                          child: Row(children: [
+                            Icon(Icons.photo_camera_outlined,
+                                size: 16,
+                                color: Theme.of(btnCtx).colorScheme.onSurface),
+                            const SizedBox(width: 12),
+                            Text('Webcam',
+                                style: TextStyle(
+                                    color: Theme.of(btnCtx)
+                                        .colorScheme
+                                        .onSurface)),
+                          ]),
+                        ),
+                        PopupMenuItem(
+                          height: 34,
+                          child: Row(children: [
+                            Icon(Icons.contacts_outlined,
+                                size: 16,
+                                color: Theme.of(btnCtx).colorScheme.onSurface),
+                            const SizedBox(width: 12),
+                            Text('Contacts',
+                                style: TextStyle(
+                                    color: Theme.of(btnCtx)
+                                        .colorScheme
+                                        .onSurface)),
+                          ]),
+                        ),
+                      ],
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    );
+                  },
+                );
+              },
             ),
             const SizedBox(width: 4),
             IconButton(
