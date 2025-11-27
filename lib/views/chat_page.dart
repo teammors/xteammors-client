@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 import '../utils/toast_utils.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../viewmodels/messages_viewmodel.dart';
@@ -83,6 +84,30 @@ class _ChatPageState extends State<ChatPage> {
     } else {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (_) => _VideoPlayerPage(url: url)));
+    }
+  }
+
+  void _openImageViewer(String? url) {
+    if (url == null) return;
+    final urls = widget.viewModel.messages
+        .where((m) => m.type == MessageType.image && m.imageUrl != null)
+        .map((m) => m.imageUrl!)
+        .toList();
+    final startIndex = urls.indexOf(url);
+    final isDesktop = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux);
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => _ImageViewerDialog(
+            urls: urls, initialIndex: startIndex >= 0 ? startIndex : 0),
+      );
+    } else {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => _ImageViewerPage(url: url)));
     }
   }
 
@@ -344,6 +369,7 @@ class _ChatPageState extends State<ChatPage> {
                         isVoicePlaying: _playingVoiceIndex == index,
                         onVoiceTap: () => _togglePlayVoice(index),
                         onVideoTap: () => _openVideo(m.videoUrl),
+                        onImageTap: () => _openImageViewer(m.imageUrl),
                       );
                     },
                   ),
@@ -579,6 +605,7 @@ class _ChatBubble extends StatelessWidget {
   final bool isVoicePlaying;
   final VoidCallback? onVoiceTap;
   final VoidCallback? onVideoTap;
+  final VoidCallback? onImageTap;
 
   const _ChatBubble({
     required this.message,
@@ -590,6 +617,7 @@ class _ChatBubble extends StatelessWidget {
     this.isVoicePlaying = false,
     this.onVoiceTap,
     this.onVideoTap,
+    this.onImageTap,
   });
 
   void _handleDoubleTap(BuildContext context) {
@@ -694,7 +722,8 @@ class _ChatBubble extends StatelessWidget {
                           _bubbleContent(message, textColor, context,
                               isVoicePlaying: isVoicePlaying,
                               onVoiceTap: onVoiceTap,
-                              onVideoTap: onVideoTap),
+                              onVideoTap: onVideoTap,
+                              onImageTap: onImageTap),
                         ],
                       ),
                     ),
@@ -754,7 +783,8 @@ class _ChatBubble extends StatelessWidget {
 Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
     {bool isVoicePlaying = false,
     VoidCallback? onVoiceTap,
-    VoidCallback? onVideoTap}) {
+    VoidCallback? onVideoTap,
+    VoidCallback? onImageTap}) {
   switch (m.type) {
     case MessageType.text:
       return Text(m.text ?? '',
@@ -778,7 +808,7 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
             rw = w * (rh / h);
           }
         }
-        return ClipRRect(
+        final img = ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: SizedBox(
             width: rw,
@@ -810,6 +840,7 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
                 : const ColoredBox(color: Colors.grey),
           ),
         );
+        return GestureDetector(onTap: onImageTap, child: img);
       }
     case MessageType.video:
       {
@@ -1470,6 +1501,177 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
         );
       }
     }
+  }
+}
+
+class _ImageViewerDialog extends StatefulWidget {
+  final List<String> urls;
+  final int initialIndex;
+  const _ImageViewerDialog({required this.urls, required this.initialIndex});
+
+  @override
+  State<_ImageViewerDialog> createState() => _ImageViewerDialogState();
+}
+
+class _ImageViewerDialogState extends State<_ImageViewerDialog> {
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+  }
+
+  Future<void> _downloadCurrent() async {
+    try {
+      final uri = Uri.parse(widget.urls[_index]);
+      final client = HttpClient();
+      final resp = await (await client.getUrl(uri)).close();
+      if (resp.statusCode != 200) {
+        if (mounted) {
+          ToastUtils.showTopToast(
+            context: context,
+            message: 'Download failed',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            icon: Icons.info_outline,
+          );
+        }
+        return;
+      }
+      final bytes =
+          await resp.fold<List<int>>(<int>[], (acc, data) => acc..addAll(data));
+      final downloadsDir = await getDownloadsDirectory();
+      final dirPath = downloadsDir?.path ??
+          (Platform.environment['HOME'] != null
+              ? '${Platform.environment['HOME']}/Downloads'
+              : (await getTemporaryDirectory()).path);
+      String ext = 'jpg';
+      final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+      final dot = last.lastIndexOf('.');
+      if (dot != -1 && dot + 1 < last.length) {
+        final e = last.substring(dot + 1).toLowerCase();
+        if (e.isNotEmpty && e.length <= 5) ext = e;
+      }
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final file = File('$dirPath/image_$ts.$ext');
+      await file.writeAsBytes(bytes);
+      if (mounted) {
+        ToastUtils.showTopToast(
+          context: context,
+          message: 'Image saved to download',
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          icon: Icons.info_outline,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ToastUtils.showTopToast(
+          context: context,
+          message: 'Download error',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          icon: Icons.info_outline,
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Center(
+              child: InteractiveViewer(
+                child: Image.network(widget.urls[_index], fit: BoxFit.contain),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Download',
+                  icon: const Icon(Icons.download, color: Colors.white),
+                  onPressed: _downloadCurrent,
+                ),
+                IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 8,
+            top: null,
+            bottom: 8,
+            child: IconButton(
+              icon:
+                  const Icon(Icons.chevron_left, color: Colors.white, size: 28),
+              onPressed: () {
+                setState(() {
+                  _index =
+                      (_index - 1 + widget.urls.length) % widget.urls.length;
+                });
+              },
+            ),
+          ),
+          Positioned(
+            right: 8,
+            top: null,
+            bottom: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right,
+                  color: Colors.white, size: 28),
+              onPressed: () {
+                setState(() {
+                  _index = (_index + 1) % widget.urls.length;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImageViewerPage extends StatelessWidget {
+  final String url;
+  const _ImageViewerPage({required this.url});
+
+  Future<void> _saveToGallery(BuildContext context) async {
+    try {
+      final ok = await GallerySaver.saveImage(url);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ok == true ? 'Saved to gallery' : 'Save failed')));
+    } catch (_) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Save error')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(actions: [
+        IconButton(
+            onPressed: () => _saveToGallery(context),
+            icon: const Icon(Icons.download)),
+      ]),
+      body: Center(
+        child:
+            InteractiveViewer(child: Image.network(url, fit: BoxFit.contain)),
+      ),
+    );
   }
 }
 
