@@ -6,10 +6,14 @@ import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:video_player/video_player.dart';
+import 'chat/chat_bubble.dart';
+import 'chat/chat_input.dart';
+import 'chat/video_player_dialog.dart';
+import 'chat/image_viewer_dialog.dart';
+import 'chat/video_player_page.dart';
+import 'chat/image_viewer_page.dart';
 import '../utils/web_download_stub.dart'
     if (dart.library.html) '../utils/web_download.dart' as web_dl;
-import 'package:gallery_saver/gallery_saver.dart';
 import '../utils/toast_utils.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../viewmodels/messages_viewmodel.dart';
@@ -35,6 +39,9 @@ class _ChatPageState extends State<ChatPage> {
   Duration _recordElapsed = Duration.zero;
   String? _recordFilePath;
   List<int> _selectedMessages = [];
+  bool _showSearchBar = false;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -87,12 +94,12 @@ class _ChatPageState extends State<ChatPage> {
         context: context,
         barrierDismissible: true,
         barrierColor: Colors.black.withValues(alpha: 0.7),
-        builder: (_) => _VideoPlayerDialog(
+        builder: (_) => VideoPlayerDialog(
             urls: urls, initialIndex: startIndex >= 0 ? startIndex : 0),
       );
     } else {
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => _VideoPlayerPage(url: url)));
+          .push(MaterialPageRoute(builder: (_) => VideoPlayerPage(url: url)));
     }
   }
 
@@ -112,12 +119,12 @@ class _ChatPageState extends State<ChatPage> {
         context: context,
         barrierDismissible: true,
         barrierColor: Colors.black.withValues(alpha: 0.7),
-        builder: (_) => _ImageViewerDialog(
+        builder: (_) => ImageViewerDialog(
             urls: urls, initialIndex: startIndex >= 0 ? startIndex : 0),
       );
     } else {
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => _ImageViewerPage(url: url)));
+          .push(MaterialPageRoute(builder: (_) => ImageViewerPage(url: url)));
     }
   }
 
@@ -152,7 +159,6 @@ class _ChatPageState extends State<ChatPage> {
       final client = HttpClient();
       final resp = await (await client.getUrl(uri)).close();
       if (resp.statusCode != 200) {
-
         ToastUtils.showTopToast(
           context: context,
           message: 'Download failed',
@@ -212,6 +218,8 @@ class _ChatPageState extends State<ChatPage> {
     _textController.dispose();
     _scrollController.dispose();
     _inputFocusNode.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     _recordTimer?.cancel();
     if (_isRecording) {
       try {
@@ -410,14 +418,221 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.more_vert,
+            icon: Icon(Icons.search_outlined,
                 color: isDark ? Colors.grey[400] : Colors.grey[700]),
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                _showSearchBar = true;
+              });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _searchFocusNode.requestFocus();
+              });
+            },
+          ),
+          Builder(
+            builder: (btnCtx) {
+              return IconButton(
+                icon: Icon(Icons.more_vert,
+                    color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                onPressed: () {
+                  final overlay = Overlay.of(btnCtx).context.findRenderObject()
+                      as RenderBox;
+                  final box = btnCtx.findRenderObject() as RenderBox;
+                  final offset = box.localToGlobal(Offset.zero);
+                  final rect = Rect.fromLTWH(
+                      offset.dx, offset.dy, box.size.width, box.size.height);
+                  final items = <PopupMenuEntry<int>>[];
+                  if (widget.viewModel.chatType == ChatType.private) {
+                    items.addAll([
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.delete_sweep_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Clear all messages',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.delete_outline,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Delete conversations',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.schedule_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Set clear time',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.notifications_off_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Block notifications',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.block,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Block the user',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                    ]);
+                  } else {
+                    items.addAll([
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.delete_sweep_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Clear all messages',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.exit_to_app,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Leave the group',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.schedule_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Set a clear time',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        height: 34,
+                        child: Row(children: [
+                          Icon(Icons.notifications_off_outlined,
+                              size: 16,
+                              color: Theme.of(btnCtx).colorScheme.onSurface),
+                          const SizedBox(width: 12),
+                          Text('Block notifications',
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(btnCtx).colorScheme.onSurface)),
+                        ]),
+                      ),
+                    ]);
+                  }
+                  showMenu(
+                    context: btnCtx,
+                    position:
+                        RelativeRect.fromRect(rect, Offset.zero & overlay.size),
+                    items: items,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
       body: Column(
         children: [
+          if (_showSearchBar)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                border: Border(
+                  bottom: BorderSide(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.grey[500] : Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                      textInputAction: TextInputAction.search,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _showSearchBar = false;
+                      });
+                      _searchController.clear();
+                    },
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: GestureDetector(
               onTap: _clearSelection,
@@ -444,7 +659,7 @@ class _ChatPageState extends State<ChatPage> {
                     itemBuilder: (context, index) {
                       final m = widget.viewModel.messages[index];
                       final isSelected = _selectedMessages.contains(index);
-                      return _ChatBubble(
+                      return ChatBubble(
                         message: m,
                         isDark: isDark,
                         chatType: widget.viewModel.chatType,
@@ -507,7 +722,7 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
-          _ChatInput(
+          ChatInput(
             isDark: isDark,
             textController: _textController,
             hasText: _hasText,
@@ -680,1228 +895,5 @@ class _ChatPageState extends State<ChatPage> {
       // 菜单关闭后的处理
       _clearSelection();
     });
-  }
-}
-
-class _ChatBubble extends StatelessWidget {
-  final ChatMessage message;
-  final bool isDark;
-  final ChatType chatType;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final Function(BuildContext, Offset?) onShowMenu;
-  final bool isVoicePlaying;
-  final VoidCallback? onVoiceTap;
-  final VoidCallback? onVideoTap;
-  final VoidCallback? onImageTap;
-  final VoidCallback? onFileTap;
-
-  const _ChatBubble({
-    required this.message,
-    required this.isDark,
-    required this.chatType,
-    required this.isSelected,
-    required this.onTap,
-    required this.onShowMenu,
-    this.isVoicePlaying = false,
-    this.onVoiceTap,
-    this.onVideoTap,
-    this.onImageTap,
-    this.onFileTap,
-  });
-
-  void _handleDoubleTap(BuildContext context) {
-    onShowMenu(context, null);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isMe = message.isMe;
-    final isMedia =
-        message.type == MessageType.image || message.type == MessageType.video;
-    final isEmoji = message.type == MessageType.emoji;
-
-    Color bubbleColor;
-    Color textColor;
-
-    if (isMe) {
-      bubbleColor =
-          (isMedia || isEmoji) ? Colors.transparent : const Color(0xFF0088CC);
-      textColor = (isMedia || isEmoji) ? Colors.white : Colors.white;
-    } else {
-      bubbleColor = (isMedia || isEmoji)
-          ? Colors.transparent
-          : (isDark ? const Color(0xFF2B2B2B) : const Color(0xFFE8E8E8));
-      textColor = isDark ? Colors.white : Colors.black;
-    }
-
-    // 判断是否需要显示头像
-    final showAvatar = !isMe && chatType == ChatType.group;
-
-    return GestureDetector(
-      onLongPress: () => onShowMenu(context, null),
-      onDoubleTap: () => _handleDoubleTap(context),
-      onSecondaryTapDown: (details) =>
-          onShowMenu(context, details.globalPosition),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: isSelected
-              ? (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.08))
-              : Colors.transparent,
-        ),
-        child: Row(
-          mainAxisAlignment:
-              isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 左侧头像（群聊且不是自己的消息）
-            if (showAvatar)
-              _Avatar(isDark: isDark, senderName: message.senderName),
-
-            Flexible(
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75,
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    // 群聊昵称（在气泡上方）
-                    if (showAvatar && message.senderName != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8, bottom: 2),
-                        child: Text(
-                          message.senderName!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-
-                    // 消息气泡
-                    Container(
-                      padding: isMedia
-                          ? EdgeInsets.zero
-                          : (isEmoji
-                              ? const EdgeInsets.all(5)
-                              : const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8)),
-                      decoration: BoxDecoration(
-                        color: bubbleColor,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (message.replyType != null)
-                            _ReplyHeader(
-                              type: message.replyType!,
-                              preview: message.replyPreview,
-                              thumbUrl: message.replyThumbUrl,
-                              isDark: isDark,
-                              isMe: isMe,
-                            ),
-                          _bubbleContent(message, textColor, context,
-                              isVoicePlaying: isVoicePlaying,
-                              onVoiceTap: onVoiceTap,
-                              onVideoTap: onVideoTap,
-                              onImageTap: onImageTap,
-                              onFileTap: onFileTap),
-                        ],
-                      ),
-                    ),
-
-                    // 时间戳和状态
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: isMe ? 0 : (showAvatar ? 8 : 0),
-                        right: isMe ? 0 : 8,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: isMe
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
-                        children: [
-                          if (message.time != null)
-                            Text(
-                              message.time!,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? Colors.grey[500]
-                                      : Colors.grey[600]),
-                            ),
-                          if (message.isEdited) ...[
-                            const SizedBox(width: 6),
-                            Text('edited',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? Colors.grey[500]
-                                        : Colors.grey[600])),
-                          ],
-                          if (isMe && message.status != null) ...[
-                            const SizedBox(width: 4),
-                            _StatusIcon(status: message.status!),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 右侧占位（为了对齐）
-            if (!isMe && !showAvatar) const SizedBox(width: 40),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
-    {bool isVoicePlaying = false,
-    VoidCallback? onVoiceTap,
-    VoidCallback? onVideoTap,
-    VoidCallback? onImageTap,
-    VoidCallback? onFileTap}) {
-  switch (m.type) {
-    case MessageType.text:
-      return Text(m.text ?? '',
-          style: TextStyle(fontSize: 16, height: 1.4, color: textColor));
-    case MessageType.emoji:
-      return Text(m.emoji ?? '', style: const TextStyle(fontSize: 60));
-    case MessageType.image:
-      {
-        final w = (m.imageWidth ?? 300).toDouble();
-        final h = (m.imageHeight ?? 200).toDouble();
-        double maxSide = 300;
-        double rw = w, rh = h;
-        if (w >= h) {
-          if (w > maxSide) {
-            rw = maxSide;
-            rh = h * (rw / w);
-          }
-        } else {
-          if (h > maxSide) {
-            rh = maxSide;
-            rw = w * (rh / h);
-          }
-        }
-        final img = ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            width: rw,
-            height: rh,
-            child: m.imageUrl != null
-                ? Image.network(
-                    m.imageUrl!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (c, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        color: Colors.grey[800],
-                        child: Center(
-                            child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.grey[400]!),
-                                ))),
-                      );
-                    },
-                    errorBuilder: (c, e, s) => ColoredBox(
-                      color: Colors.grey[800]!,
-                      child: const Icon(Icons.broken_image, color: Colors.grey),
-                    ),
-                  )
-                : const ColoredBox(color: Colors.grey),
-          ),
-        );
-        return GestureDetector(onTap: onImageTap, child: img);
-      }
-    case MessageType.video:
-      {
-        final w = (m.videoWidth ?? 300).toDouble();
-        final h = (m.videoHeight ?? 200).toDouble();
-        double maxSide = 300;
-        double rw = w, rh = h;
-        if (w >= h) {
-          if (w > maxSide) {
-            rw = maxSide;
-            rh = h * (rw / w);
-          }
-        } else {
-          if (h > maxSide) {
-            rh = maxSide;
-            rw = w * (rh / h);
-          }
-        }
-        final thumb = Stack(
-          alignment: Alignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                width: rw,
-                height: rh,
-                child: m.videoThumbUrl != null
-                    ? Image.network(
-                        m.videoThumbUrl!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (c, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: Colors.grey[800],
-                            child: Center(
-                                child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.grey[400]!),
-                                    ))),
-                          );
-                        },
-                        errorBuilder: (c, e, s) => ColoredBox(
-                          color: Colors.grey[800]!,
-                          child: const Icon(Icons.broken_image,
-                              color: Colors.grey),
-                        ),
-                      )
-                    : const ColoredBox(color: Colors.black12),
-              ),
-            ),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.play_arrow, size: 32, color: Colors.white),
-            ),
-          ],
-        );
-        return GestureDetector(onTap: onVideoTap, child: thumb);
-      }
-    case MessageType.voice:
-      final d = m.voiceDurationSec ?? 0;
-      final mm = (d ~/ 60).toString().padLeft(2, '0');
-      final ss = (d % 60).toString().padLeft(2, '0');
-      return InkWell(
-        onTap: onVoiceTap,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(isVoicePlaying ? Icons.stop : Icons.play_arrow,
-                size: 24, color: textColor),
-            const SizedBox(width: 8),
-            Text('$mm:$ss', style: TextStyle(color: textColor, fontSize: 14)),
-          ],
-        ),
-      );
-    case MessageType.file:
-      return InkWell(
-        onTap: onFileTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.insert_drive_file, size: 24, color: textColor),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(m.fileName ?? 'File',
-                      style: TextStyle(color: textColor, fontSize: 14)),
-                  if (m.fileSize != null)
-                    Text(m.fileSize!,
-                        style: TextStyle(
-                            color: textColor.withOpacity(0.7), fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-  }
-}
-
-class _ReplyHeader extends StatelessWidget {
-  final MessageType type;
-  final String? preview;
-  final String? thumbUrl;
-  final bool isDark;
-  final bool isMe;
-  const _ReplyHeader(
-      {required this.type,
-      this.preview,
-      this.thumbUrl,
-      required this.isDark,
-      required this.isMe});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final bg = isDark ? Colors.white12 : Colors.black12;
-    final Color textColor = isMe ? Colors.white : cs.onSurfaceVariant;
-
-    Widget? media;
-    String label;
-    switch (type) {
-      case MessageType.image:
-        label = 'Photo';
-        media = ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: thumbUrl != null
-                ? Image.network(
-                    thumbUrl!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (c, child, p) => p == null
-                        ? child
-                        : Center(
-                            child: SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2))),
-                    errorBuilder: (c, e, s) => ColoredBox(
-                      color: Colors.grey[800]!,
-                      child: const Icon(Icons.broken_image, size: 16),
-                    ),
-                  )
-                : const ColoredBox(color: Colors.grey),
-          ),
-        );
-        break;
-      case MessageType.video:
-        label = 'Video';
-        media = Stack(
-          alignment: Alignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: thumbUrl != null
-                    ? Image.network(
-                        thumbUrl!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (c, child, p) => p == null
-                            ? child
-                            : Center(
-                                child: SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))),
-                        errorBuilder: (c, e, s) => ColoredBox(
-                          color: Colors.grey[800]!,
-                          child: const Icon(Icons.broken_image, size: 16),
-                        ),
-                      )
-                    : const ColoredBox(color: Colors.black12),
-              ),
-            ),
-            const Icon(Icons.play_arrow, size: 16, color: Colors.white),
-          ],
-        );
-        break;
-      case MessageType.voice:
-        label = 'Voice message';
-        break;
-      case MessageType.file:
-        label = 'File';
-        break;
-      case MessageType.emoji:
-        label = 'Emoji';
-        break;
-      default:
-        label = preview ?? '';
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border(
-          left: BorderSide(
-            color: const Color(0xFF0088CC),
-            width: 3,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (media != null) media,
-          if (media != null) const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 240),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: TextStyle(
-                        color: textColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                if (type != MessageType.image &&
-                    type != MessageType.video &&
-                    (preview?.isNotEmpty ?? false))
-                  Text(
-                    preview!,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    style: TextStyle(color: textColor, fontSize: 12),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  final bool isDark;
-  final String? senderName;
-
-  const _Avatar({required this.isDark, this.senderName});
-
-  @override
-  Widget build(BuildContext context) {
-    // 根据昵称生成头像颜色
-    Color getAvatarColor(String name) {
-      final colors = [
-        const Color(0xFF598BF6),
-        const Color(0xFF34C759),
-        const Color(0xFFFF9500),
-        const Color(0xFFFF3B30),
-        const Color(0xFFAF52DE),
-      ];
-      final index = name.codeUnits.fold(0, (a, b) => a + b) % colors.length;
-      return colors[index];
-    }
-
-    // 获取昵称首字符
-    String getInitials(String name) {
-      if (name.isEmpty) return '?';
-      if (name.length == 1) return name;
-      return name.substring(0, 1);
-    }
-
-    return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: senderName != null
-            ? getAvatarColor(senderName!)
-            : (isDark ? Colors.grey[700] : Colors.grey[300]),
-      ),
-      child: Center(
-        child: Text(
-          senderName != null ? getInitials(senderName!) : '?',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatInput extends StatelessWidget {
-  final bool isDark;
-  final TextEditingController textController;
-  final bool hasText;
-  final VoidCallback onSend;
-  final FocusNode? focusNode;
-  final bool isRecording;
-  final VoidCallback? onMicPressed;
-
-  const _ChatInput({
-    required this.isDark,
-    required this.textController,
-    required this.hasText,
-    required this.onSend,
-    this.focusNode,
-    this.isRecording = false,
-    this.onMicPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 50,
-        padding: const EdgeInsets.fromLTRB(15, 4, 15, 4),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-        ),
-        child: Row(
-          children: [
-            Builder(
-              builder: (btnCtx) {
-                return IconButton(
-                  icon: Icon(Icons.attach_file,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      size: 20),
-                  onPressed: () {
-                    final overlay = Overlay.of(btnCtx)
-                        .context
-                        .findRenderObject() as RenderBox;
-                    final box = btnCtx.findRenderObject() as RenderBox;
-                    final offset = box.localToGlobal(Offset.zero);
-                    final rect = Rect.fromLTWH(
-                        offset.dx, offset.dy, box.size.width, box.size.height);
-                    showMenu(
-                      context: btnCtx,
-                      position: RelativeRect.fromRect(
-                          rect, Offset.zero & overlay.size),
-                      items: [
-                        PopupMenuItem(
-                          height: 34,
-                          child: Row(children: [
-                            Icon(Icons.image_outlined,
-                                size: 16,
-                                color: Theme.of(btnCtx).colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text('Images',
-                                style: TextStyle(
-                                    color: Theme.of(btnCtx)
-                                        .colorScheme
-                                        .onSurface)),
-                          ]),
-                        ),
-                        PopupMenuItem(
-                          height: 34,
-                          child: Row(children: [
-                            Icon(Icons.videocam_outlined,
-                                size: 16,
-                                color: Theme.of(btnCtx).colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text('Videos',
-                                style: TextStyle(
-                                    color: Theme.of(btnCtx)
-                                        .colorScheme
-                                        .onSurface)),
-                          ]),
-                        ),
-                        PopupMenuItem(
-                          height: 34,
-                          child: Row(children: [
-                            Icon(Icons.insert_drive_file_outlined,
-                                size: 16,
-                                color: Theme.of(btnCtx).colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text('Files',
-                                style: TextStyle(
-                                    color: Theme.of(btnCtx)
-                                        .colorScheme
-                                        .onSurface)),
-                          ]),
-                        ),
-                        PopupMenuItem(
-                          height: 34,
-                          child: Row(children: [
-                            Icon(Icons.photo_camera_outlined,
-                                size: 16,
-                                color: Theme.of(btnCtx).colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text('Webcam',
-                                style: TextStyle(
-                                    color: Theme.of(btnCtx)
-                                        .colorScheme
-                                        .onSurface)),
-                          ]),
-                        ),
-                        PopupMenuItem(
-                          height: 34,
-                          child: Row(children: [
-                            Icon(Icons.contacts_outlined,
-                                size: 16,
-                                color: Theme.of(btnCtx).colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text('Contacts',
-                                style: TextStyle(
-                                    color: Theme.of(btnCtx)
-                                        .colorScheme
-                                        .onSurface)),
-                          ]),
-                        ),
-                      ],
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    );
-                  },
-                );
-              },
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              icon: Icon(Icons.photo_camera_outlined,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  size: 20),
-              onPressed: () {},
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.only(left: 15, right: 15, top: 7),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF2A2A2A)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: TextField(
-                  controller: textController,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Message...',
-                    hintStyle: TextStyle(
-                      color: isDark ? Colors.grey[500] : Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => onSend(),
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // 表情图标或发送图标
-            IconButton(
-              icon: Icon(
-                hasText ? Icons.send : Icons.emoji_emotions_outlined,
-                color: hasText
-                    ? const Color(0xFF0088CC)
-                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
-                size: 20,
-              ),
-              onPressed: hasText
-                  ? onSend
-                  : () {
-                      // 表情包功能
-                    },
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              icon: Icon(
-                isRecording ? Icons.stop : Icons.mic_none_outlined,
-                color: isRecording
-                    ? Colors.red
-                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
-                size: 20,
-              ),
-              onPressed: onMicPressed,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusIcon extends StatelessWidget {
-  final ReadMark status;
-  const _StatusIcon({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    switch (status) {
-      case ReadMark.singleGrey:
-        return Icon(Icons.done, color: Colors.grey, size: 16);
-      case ReadMark.doubleGreen:
-        return Icon(Icons.done_all, color: const Color(0xFF98E774), size: 16);
-    }
-  }
-}
-
-class _VideoPlayerDialog extends StatefulWidget {
-  final List<String> urls;
-  final int initialIndex;
-  const _VideoPlayerDialog({required this.urls, required this.initialIndex});
-
-  @override
-  State<_VideoPlayerDialog> createState() => _VideoPlayerDialogState();
-}
-
-class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
-  late VideoPlayerController _controller;
-  bool _ready = false;
-  bool _isPlaying = true;
-  late int _index;
-
-  @override
-  void initState() {
-    super.initState();
-    _index = widget.initialIndex;
-    _controller =
-        VideoPlayerController.networkUrl(Uri.parse(widget.urls[_index]))
-          ..initialize().then((_) {
-            setState(() => _ready = true);
-            _controller.play();
-          });
-  }
-
-  @override
-  void dispose() {
-    _controller.pause();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Stack(
-        children: [
-          AspectRatio(
-            aspectRatio: _ready ? _controller.value.aspectRatio : 16 / 9,
-            child: _ready
-                ? VideoPlayer(_controller)
-                : const Center(child: CircularProgressIndicator()),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: _isPlaying ? 'Pause' : 'Play',
-                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: Colors.white),
-                  onPressed: () {
-                    if (!_ready) return;
-                    if (_isPlaying) {
-                      _controller.pause();
-                    } else {
-                      _controller.play();
-                    }
-                    setState(() => _isPlaying = !_isPlaying);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Download',
-                  icon: const Icon(Icons.download, color: Colors.white),
-                  onPressed: _downloadToDesktop,
-                ),
-                IconButton(
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 8,
-            bottom: 8,
-            child: IconButton(
-              icon:
-                  const Icon(Icons.chevron_left, color: Colors.white, size: 28),
-              onPressed: () async {
-                final prev =
-                    (_index - 1 + widget.urls.length) % widget.urls.length;
-                await _controller.pause();
-                _controller.dispose();
-                setState(() {
-                  _ready = false;
-                  _isPlaying = true;
-                  _index = prev;
-                  _controller = VideoPlayerController.networkUrl(
-                      Uri.parse(widget.urls[_index]))
-                    ..initialize().then((_) {
-                      setState(() => _ready = true);
-                      _controller.play();
-                    });
-                });
-              },
-            ),
-          ),
-          Positioned(
-            right: 8,
-            bottom: 8,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_right,
-                  color: Colors.white, size: 28),
-              onPressed: () async {
-                final next = (_index + 1) % widget.urls.length;
-                await _controller.pause();
-                _controller.dispose();
-                setState(() {
-                  _ready = false;
-                  _isPlaying = true;
-                  _index = next;
-                  _controller = VideoPlayerController.networkUrl(
-                      Uri.parse(widget.urls[_index]))
-                    ..initialize().then((_) {
-                      setState(() => _ready = true);
-                      _controller.play();
-                    });
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _downloadToDesktop() async {
-    try {
-      if (kIsWeb) {
-        final uri = Uri.parse(widget.urls[_index]);
-        final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
-        final dot = last.lastIndexOf('.');
-        String ext = 'mp4';
-        if (dot != -1 && dot + 1 < last.length) {
-          final e = last.substring(dot + 1).toLowerCase();
-          if (e.isNotEmpty && e.length <= 5) ext = e;
-        }
-        final ts = DateTime.now().millisecondsSinceEpoch;
-        final ok = await web_dl.triggerWebDownload(
-            widget.urls[_index], 'video_$ts.$ext');
-        if (!ok && mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Download failed')));
-        }
-        return;
-      }
-      final uri = Uri.parse(widget.urls[_index]);
-      final client = HttpClient();
-      final req = await client.getUrl(uri);
-      final resp = await req.close();
-      if (resp.statusCode != 200) {
-        if (mounted) {
-          ToastUtils.showTopToast(
-            context: context,
-            message: 'Download failed',
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            icon: Icons.info_outline,
-          );
-        }
-
-        return;
-      }
-      final bytes =
-          await resp.fold<List<int>>(<int>[], (acc, data) => acc..addAll(data));
-      final downloadsDir = await getDownloadsDirectory();
-      final dirPath = downloadsDir?.path ??
-          (Platform.environment['HOME'] != null
-              ? '${Platform.environment['HOME']}/Downloads'
-              : (await getTemporaryDirectory()).path);
-      final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
-      final dot = last.lastIndexOf('.');
-      String ext = 'mp4';
-      if (dot != -1 && dot + 1 < last.length) {
-        final e = last.substring(dot + 1).toLowerCase();
-        if (e.isNotEmpty && e.length <= 5) {
-          ext = e;
-        }
-      }
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'video_${ts}.$ext';
-      final file = File('$dirPath/$fileName');
-      await file.writeAsBytes(bytes);
-      if (mounted) {
-        ToastUtils.showTopToast(
-          context: context,
-          message: 'Video saved to download',
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          icon: Icons.info_outline,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ToastUtils.showTopToast(
-          context: context,
-          message: 'Download error',
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          icon: Icons.info_outline,
-        );
-      }
-    }
-  }
-}
-
-class _ImageViewerDialog extends StatefulWidget {
-  final List<String> urls;
-  final int initialIndex;
-  const _ImageViewerDialog({required this.urls, required this.initialIndex});
-
-  @override
-  State<_ImageViewerDialog> createState() => _ImageViewerDialogState();
-}
-
-class _ImageViewerDialogState extends State<_ImageViewerDialog> {
-  late int _index;
-
-  @override
-  void initState() {
-    super.initState();
-    _index = widget.initialIndex;
-  }
-
-  Future<void> _downloadCurrent() async {
-    try {
-      if (kIsWeb) {
-        final uri = Uri.parse(widget.urls[_index]);
-        final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
-        final dot = last.lastIndexOf('.');
-        String ext = 'jpg';
-        if (dot != -1 && dot + 1 < last.length) {
-          final e = last.substring(dot + 1).toLowerCase();
-          if (e.isNotEmpty && e.length <= 5) ext = e;
-        }
-        final ts = DateTime.now().millisecondsSinceEpoch;
-        final ok = await web_dl.triggerWebDownload(
-            widget.urls[_index], 'image_$ts.$ext');
-        if (!ok && mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Download failed')));
-        }
-        return;
-      }
-      final uri = Uri.parse(widget.urls[_index]);
-      final client = HttpClient();
-      final resp = await (await client.getUrl(uri)).close();
-      if (resp.statusCode != 200) {
-        if (mounted) {
-          ToastUtils.showTopToast(
-            context: context,
-            message: 'Download failed',
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            icon: Icons.info_outline,
-          );
-        }
-        return;
-      }
-      final bytes =
-          await resp.fold<List<int>>(<int>[], (acc, data) => acc..addAll(data));
-      final downloadsDir = await getDownloadsDirectory();
-      final dirPath = downloadsDir?.path ??
-          (Platform.environment['HOME'] != null
-              ? '${Platform.environment['HOME']}/Downloads'
-              : (await getTemporaryDirectory()).path);
-      String ext = 'jpg';
-      final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
-      final dot = last.lastIndexOf('.');
-      if (dot != -1 && dot + 1 < last.length) {
-        final e = last.substring(dot + 1).toLowerCase();
-        if (e.isNotEmpty && e.length <= 5) ext = e;
-      }
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final file = File('$dirPath/image_$ts.$ext');
-      await file.writeAsBytes(bytes);
-      if (mounted) {
-        ToastUtils.showTopToast(
-          context: context,
-          message: 'Image saved to download',
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          icon: Icons.info_outline,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ToastUtils.showTopToast(
-          context: context,
-          message: 'Download error',
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          icon: Icons.info_outline,
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Center(
-              child: InteractiveViewer(
-                child: Image.network(widget.urls[_index], fit: BoxFit.contain),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: 'Download',
-                  icon: const Icon(Icons.download, color: Colors.white),
-                  onPressed: _downloadCurrent,
-                ),
-                IconButton(
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 8,
-            top: null,
-            bottom: 8,
-            child: IconButton(
-              icon:
-                  const Icon(Icons.chevron_left, color: Colors.white, size: 28),
-              onPressed: () {
-                setState(() {
-                  _index =
-                      (_index - 1 + widget.urls.length) % widget.urls.length;
-                });
-              },
-            ),
-          ),
-          Positioned(
-            right: 8,
-            top: null,
-            bottom: 8,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_right,
-                  color: Colors.white, size: 28),
-              onPressed: () {
-                setState(() {
-                  _index = (_index + 1) % widget.urls.length;
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ImageViewerPage extends StatelessWidget {
-  final String url;
-  const _ImageViewerPage({required this.url});
-
-  Future<void> _saveToGallery(BuildContext context) async {
-    try {
-      final ok = await GallerySaver.saveImage(url);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(ok == true ? 'Saved to gallery' : 'Save failed')));
-    } catch (_) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Save error')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(actions: [
-        IconButton(
-            onPressed: () => _saveToGallery(context),
-            icon: const Icon(Icons.download)),
-      ]),
-      body: Center(
-        child:
-            InteractiveViewer(child: Image.network(url, fit: BoxFit.contain)),
-      ),
-    );
-  }
-}
-
-class _VideoPlayerPage extends StatefulWidget {
-  final String url;
-  const _VideoPlayerPage({required this.url});
-
-  @override
-  State<_VideoPlayerPage> createState() => _VideoPlayerPageState();
-}
-
-class _VideoPlayerPageState extends State<_VideoPlayerPage> {
-  late final VideoPlayerController _controller;
-  bool _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        setState(() => _ready = true);
-        _controller.play();
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller.pause();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Video')),
-      body: Center(
-        child: _ready
-            ? AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              )
-            : const CircularProgressIndicator(),
-      ),
-    );
   }
 }
