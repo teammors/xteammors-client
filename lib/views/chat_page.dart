@@ -222,15 +222,15 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _showMessageMenu(BuildContext context, int index, Offset tapPosition) {
+  void _showMessageMenu(BuildContext context, int index,
+      [Offset? tapPosition]) {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
+    final Size s = overlay.size;
+    final Offset pos = tapPosition ?? Offset(s.width / 2, s.height / 2);
     final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        tapPosition,
-        tapPosition,
-      ),
-      Offset.zero & overlay.size,
+      Rect.fromPoints(pos, pos),
+      Offset.zero & s,
     );
 
     setState(() {
@@ -390,7 +390,7 @@ class _ChatBubble extends StatelessWidget {
   final ChatType chatType;
   final bool isSelected;
   final VoidCallback onTap;
-  final Function(BuildContext, Offset) onShowMenu;
+  final Function(BuildContext, Offset?) onShowMenu;
 
   const _ChatBubble({
     required this.message,
@@ -401,12 +401,8 @@ class _ChatBubble extends StatelessWidget {
     required this.onShowMenu,
   });
 
-  void _handleRightClick(BuildContext context, TapDownDetails details) {
-    onShowMenu(context, details.globalPosition);
-  }
-
-  void _handleDoubleTap() {
-    // 双击消息逻辑，比如快速回复或快速反应
+  void _handleDoubleTap(BuildContext context) {
+    onShowMenu(context, null);
   }
 
   @override
@@ -434,9 +430,10 @@ class _ChatBubble extends StatelessWidget {
     final showAvatar = !isMe && chatType == ChatType.group;
 
     return GestureDetector(
-      onLongPress: onTap,
-      onDoubleTap: _handleDoubleTap,
-      onTapDown: (details) => _handleRightClick(context, details),
+      onLongPress: () => onShowMenu(context, null),
+      onDoubleTap: () => _handleDoubleTap(context),
+      onSecondaryTapDown: (details) =>
+          onShowMenu(context, details.globalPosition),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 0),
