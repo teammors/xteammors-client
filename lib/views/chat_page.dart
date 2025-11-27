@@ -1,5 +1,11 @@
 // chat_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../viewmodels/messages_viewmodel.dart';
 
@@ -16,6 +22,13 @@ class _ChatPageState extends State<ChatPage> {
   bool _hasText = false;
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocusNode = FocusNode();
+  final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  int? _playingVoiceIndex;
+  bool _isRecording = false;
+  Timer? _recordTimer;
+  Duration _recordElapsed = Duration.zero;
+  String? _recordFilePath;
   List<int> _selectedMessages = [];
 
   @override
@@ -26,6 +39,7 @@ class _ChatPageState extends State<ChatPage> {
         _hasText = _textController.text.isNotEmpty;
       });
     });
+    _initRecorder();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         try {
@@ -35,11 +49,62 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  Future<void> _togglePlayVoice(int index) async {
+    final msg = widget.viewModel.messages[index];
+    final url = msg.voiceUrl;
+    if (url == null) return;
+    if (_playingVoiceIndex == index) {
+      await _audioPlayer.stop();
+      setState(() => _playingVoiceIndex = null);
+      return;
+    }
+    await _audioPlayer.stop();
+    setState(() => _playingVoiceIndex = index);
+    _audioPlayer.onPlayerComplete.listen((_) {
+      setState(() => _playingVoiceIndex = null);
+    });
+    await _audioPlayer.play(DeviceFileSource(url));
+  }
+
+  void _openVideo(String? url) {
+    if (url == null) return;
+    final isDesktop = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux);
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => _VideoPlayerDialog(url: url),
+      );
+    } else {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => _VideoPlayerPage(url: url)));
+    }
+  }
+
+  Future<void> _initRecorder() async {
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!hasPermission) {
+        // 在部分平台会自动请求权限；如果未授权，后续开始录音会失败
+      }
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
     _inputFocusNode.dispose();
+    _recordTimer?.cancel();
+    if (_isRecording) {
+      try {
+        _recorder.stop();
+      } catch (_) {}
+    }
+    _recorder.dispose();
     super.dispose();
   }
 
@@ -74,6 +139,77 @@ class _ChatPageState extends State<ChatPage> {
         _inputFocusNode.requestFocus();
       }
     });
+  }
+
+  Future<void> _toggleRecord() async {
+    if (!_isRecording) {
+      final now = DateTime.now();
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/audio_${now.millisecondsSinceEpoch}.m4a';
+      try {
+        _recordElapsed = Duration.zero;
+        await _recorder.start(
+          const RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            bitRate: 128000,
+            sampleRate: 44100,
+          ),
+          path: filePath,
+        );
+        setState(() {
+          _isRecording = true;
+          _recordFilePath = filePath;
+        });
+        _recordTimer?.cancel();
+        _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          setState(() {
+            _recordElapsed += const Duration(seconds: 1);
+          });
+        });
+      } catch (_) {}
+      return;
+    }
+
+    try {
+      final path = await _recorder.stop();
+      _recordTimer?.cancel();
+      final seconds = _recordElapsed.inSeconds;
+      setState(() {
+        _isRecording = false;
+        _recordElapsed = Duration.zero;
+      });
+      if (seconds >= 2) {
+        final now = DateTime.now();
+        final hh = now.hour.toString().padLeft(2, '0');
+        final mm = now.minute.toString().padLeft(2, '0');
+        final m = ChatMessage(
+          type: MessageType.voice,
+          isMe: true,
+          voiceDurationSec: seconds,
+          voiceUrl: path ?? _recordFilePath,
+          time: '$hh:$mm',
+          status: ReadMark.singleGrey,
+        );
+        setState(() {
+          widget.viewModel.messages.add(m);
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+          _inputFocusNode.requestFocus();
+        });
+      }
+    } catch (_) {
+      setState(() {
+        _isRecording = false;
+      });
+      _recordTimer?.cancel();
+    }
   }
 
   void _toggleMessageSelection(int index) {
@@ -203,6 +339,9 @@ class _ChatPageState extends State<ChatPage> {
                         onShowMenu: (context, tapPosition) {
                           _showMessageMenu(context, index, tapPosition);
                         },
+                        isVoicePlaying: _playingVoiceIndex == index,
+                        onVoiceTap: () => _togglePlayVoice(index),
+                        onVideoTap: () => _openVideo(m.videoUrl),
                       );
                     },
                   ),
@@ -210,12 +349,58 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
+          if (_isRecording)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.08),
+                border: Border(
+                  top: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                  bottom: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.fiber_manual_record,
+                          color: Colors.red, size: 14),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_recordElapsed.inMinutes.toString().padLeft(2, '0')}:${(_recordElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 13),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('Recording...',
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontSize: 12)),
+                    ],
+                  ),
+                  
+                  
+                ],
+              ),
+            ),
           _ChatInput(
             isDark: isDark,
             textController: _textController,
             hasText: _hasText,
             onSend: _sendMessage,
             focusNode: _inputFocusNode,
+            isRecording: _isRecording,
+            onMicPressed: _toggleRecord,
           ),
         ],
       ),
@@ -391,6 +576,9 @@ class _ChatBubble extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final Function(BuildContext, Offset?) onShowMenu;
+  final bool isVoicePlaying;
+  final VoidCallback? onVoiceTap;
+  final VoidCallback? onVideoTap;
 
   const _ChatBubble({
     required this.message,
@@ -399,6 +587,9 @@ class _ChatBubble extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.onShowMenu,
+    this.isVoicePlaying = false,
+    this.onVoiceTap,
+    this.onVideoTap,
   });
 
   void _handleDoubleTap(BuildContext context) {
@@ -500,7 +691,10 @@ class _ChatBubble extends StatelessWidget {
                               isDark: isDark,
                               isMe: isMe,
                             ),
-                          _bubbleContent(message, textColor, context),
+                          _bubbleContent(message, textColor, context,
+                              isVoicePlaying: isVoicePlaying,
+                              onVoiceTap: onVoiceTap,
+                              onVideoTap: onVideoTap),
                         ],
                       ),
                     ),
@@ -557,7 +751,10 @@ class _ChatBubble extends StatelessWidget {
   }
 }
 
-Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context) {
+Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
+    {bool isVoicePlaying = false,
+    VoidCallback? onVoiceTap,
+    VoidCallback? onVideoTap}) {
   switch (m.type) {
     case MessageType.text:
       return Text(m.text ?? '',
@@ -631,7 +828,7 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context) {
             rw = w * (rh / h);
           }
         }
-        return Stack(
+        final thumb = Stack(
           alignment: Alignment.center,
           children: [
             ClipRRect(
@@ -678,25 +875,21 @@ Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context) {
             ),
           ],
         );
+        return GestureDetector(onTap: onVideoTap, child: thumb);
       }
     case MessageType.voice:
       final d = m.voiceDurationSec ?? 0;
       final mm = (d ~/ 60).toString().padLeft(2, '0');
       final ss = (d % 60).toString().padLeft(2, '0');
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      return InkWell(
+        onTap: onVoiceTap,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.play_circle_fill, size: 24, color: textColor),
+            Icon(isVoicePlaying ? Icons.stop : Icons.play_arrow,
+                size: 24, color: textColor),
             const SizedBox(width: 8),
             Text('$mm:$ss', style: TextStyle(color: textColor, fontSize: 14)),
-            const SizedBox(width: 16),
-            Container(
-              width: 80,
-              height: 2,
-              color: textColor.withOpacity(0.5),
-            ),
           ],
         ),
       );
@@ -926,6 +1119,8 @@ class _ChatInput extends StatelessWidget {
   final bool hasText;
   final VoidCallback onSend;
   final FocusNode? focusNode;
+  final bool isRecording;
+  final VoidCallback? onMicPressed;
 
   const _ChatInput({
     required this.isDark,
@@ -933,6 +1128,8 @@ class _ChatInput extends StatelessWidget {
     required this.hasText,
     required this.onSend,
     this.focusNode,
+    this.isRecording = false,
+    this.onMicPressed,
   });
 
   @override
@@ -1103,10 +1300,14 @@ class _ChatInput extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: Icon(Icons.mic_none_outlined,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  size: 20),
-              onPressed: () {},
+              icon: Icon(
+                isRecording ? Icons.stop : Icons.mic_none_outlined,
+                color: isRecording
+                    ? Colors.red
+                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                size: 20,
+              ),
+              onPressed: onMicPressed,
             ),
           ],
         ),
@@ -1127,5 +1328,92 @@ class _StatusIcon extends StatelessWidget {
       case ReadMark.doubleGreen:
         return Icon(Icons.done_all, color: const Color(0xFF98E774), size: 16);
     }
+  }
+}
+
+class _VideoPlayerDialog extends StatefulWidget {
+  final String url;
+  const _VideoPlayerDialog({required this.url});
+
+  @override
+  State<_VideoPlayerDialog> createState() => _VideoPlayerDialogState();
+}
+
+class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
+  late final VideoPlayerController _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        setState(() => _ready = true);
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.pause();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: AspectRatio(
+        aspectRatio: _ready ? _controller.value.aspectRatio : 16 / 9,
+        child: _ready
+            ? VideoPlayer(_controller)
+            : const Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+class _VideoPlayerPage extends StatefulWidget {
+  final String url;
+  const _VideoPlayerPage({required this.url});
+
+  @override
+  State<_VideoPlayerPage> createState() => _VideoPlayerPageState();
+}
+
+class _VideoPlayerPageState extends State<_VideoPlayerPage> {
+  late final VideoPlayerController _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        setState(() => _ready = true);
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.pause();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Video')),
+      body: Center(
+        child: _ready
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              )
+            : const CircularProgressIndicator(),
+      ),
+    );
   }
 }
