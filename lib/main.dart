@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
+
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
 import 'views/ai_page.dart';
@@ -13,6 +15,18 @@ import 'viewmodels/theme_viewmodel.dart';
 
 void main() {
   runApp(const XteammorsApp());
+
+  // 初始化窗口
+  if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
+    doWhenWindowReady(() {
+      final initialSize = Size(1200, 800);
+      appWindow.minSize = initialSize;
+      appWindow.size = initialSize;
+      appWindow.alignment = Alignment.center;
+      appWindow.title = "Xteammors";
+      appWindow.show();
+    });
+  }
 }
 
 class XteammorsApp extends StatefulWidget {
@@ -133,124 +147,172 @@ class _MainShellState extends State<MainShell> {
     return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
   }
 
+  // 自定义标题栏
+  Widget _buildTitleBar() {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      color: Theme.of(context).colorScheme.background,
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          // macOS 风格的窗口控制按钮
+          if (Platform.isMacOS) ...[
+            WindowButtons(),
+            const Spacer(),
+          ],
+          // 应用标题
+          Expanded(
+            child: MoveWindow(
+              child: Center(
+                child: Text(
+                  _titles[_selectedIndex],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Windows/Linux 风格的窗口控制按钮
+          if (!Platform.isMacOS) ...[
+            const Spacer(),
+            WindowButtons(),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isDesktop) {
       const dividerWidth = 0.5;
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final total = constraints.maxWidth;
-          final leftWidth = (total - dividerWidth) * _split;
-          final rightWidth = total - dividerWidth - leftWidth;
-          return Row(
+      return WindowBorder(
+        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+        width: 1,
+        child: Material(
+          child: Column(
             children: [
-              SizedBox(
-                width: leftWidth,
-                child: Scaffold(
-                  appBar: AppBar(
-                    centerTitle: false,
-                    backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-                    foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-                    title: Text(
-                      _titles[_selectedIndex],
-                      style: Theme.of(context).appBarTheme.titleTextStyle,
-                    ),
-                  ),
-                  body: _pageForIndex(_selectedIndex),
-                  bottomNavigationBar: NavigationBarTheme(
-                    data: NavigationBarThemeData(
-                      height: 50,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.08),
-                      indicatorColor: isDark
-                          ? Colors.white.withValues(alpha: 0.3)
-                          : Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withValues(alpha: 0.5),
-                      iconTheme: MaterialStateProperty.resolveWith((states) {
-                        if (states.contains(MaterialState.selected)) {
-                          return IconThemeData(
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.white);
-                        }
-                        return IconThemeData(
-                            color:
-                            isDark ? Colors.grey[500] : Colors.grey[700]);
-                      }),
-                    ),
-                    child: NavigationBar(
-                      labelBehavior:
-                      NavigationDestinationLabelBehavior.alwaysHide,
-                      selectedIndex: _selectedIndex,
-                      destinations: const [
-                        NavigationDestination(
-                            icon: Icon(
-                              Icons.chat_bubble_outline,
+              // 自定义标题栏
+              _buildTitleBar(),
+              // 窗口内容
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final total = constraints.maxWidth;
+                    final leftWidth = (total - dividerWidth) * _split;
+                    final rightWidth = total - dividerWidth - leftWidth;
+                    return Row(
+                      children: [
+                        SizedBox(
+                          width: leftWidth,
+                          child: Scaffold(
+                            appBar: null, // 移除原来的 AppBar
+                            body: _pageForIndex(_selectedIndex),
+                            bottomNavigationBar: NavigationBarTheme(
+                              data: NavigationBarThemeData(
+                                height: 50,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.08),
+                                indicatorColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withValues(alpha: 0.5),
+                                iconTheme: MaterialStateProperty.resolveWith((states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return IconThemeData(
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.white);
+                                  }
+                                  return IconThemeData(
+                                      color:
+                                      isDark ? Colors.grey[500] : Colors.grey[700]);
+                                }),
+                              ),
+                              child: NavigationBar(
+                                labelBehavior:
+                                NavigationDestinationLabelBehavior.alwaysHide,
+                                selectedIndex: _selectedIndex,
+                                destinations: const [
+                                  NavigationDestination(
+                                      icon: Icon(
+                                        Icons.chat_bubble_outline,
+                                      ),
+                                      label: ''),
+                                  NavigationDestination(
+                                      icon: Icon(Icons.people_outline), label: ''),
+                                  NavigationDestination(
+                                      icon: Icon(Icons.smart_toy_outlined), label: ''),
+                                  NavigationDestination(
+                                      icon: Icon(Icons.settings_outlined), label: ''),
+                                ],
+                                onDestinationSelected: (index) {
+                                  setState(() {
+                                    _selectedIndex = index;
+                                    _rightPane = const WorkspaceBlank();
+                                  });
+                                },
+                              ),
                             ),
-                            label: ''),
-                        NavigationDestination(
-                            icon: Icon(Icons.people_outline), label: ''),
-                        NavigationDestination(
-                            icon: Icon(Icons.smart_toy_outlined), label: ''),
-                        NavigationDestination(
-                            icon: Icon(Icons.settings_outlined), label: ''),
+                          ),
+                        ),
+                        GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (details) {
+                            final newSplit = (_split + details.delta.dx / total).clamp(
+                              _minSplit,
+                              _maxSplit,
+                            );
+                            setState(() {
+                              _split = newSplit;
+                            });
+                          },
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.resizeColumn,
+                            child: SizedBox(
+                              width: dividerWidth,
+                              child: VerticalDivider(
+                                width: dividerWidth,
+                                thickness: 1,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant
+                                    .withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: rightWidth,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            child: _rightPane,
+                          ),
+                        ),
                       ],
-                      onDestinationSelected: (index) {
-                        setState(() {
-                          _selectedIndex = index;
-                          _rightPane = const WorkspaceBlank();
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onHorizontalDragUpdate: (details) {
-                  final newSplit = (_split + details.delta.dx / total).clamp(
-                    _minSplit,
-                    _maxSplit,
-                  );
-                  setState(() {
-                    _split = newSplit;
-                  });
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.resizeColumn,
-                  child: SizedBox(
-                    width: dividerWidth,
-                    child: VerticalDivider(
-                      width: dividerWidth,
-                      thickness: 1,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: rightWidth,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  child: _rightPane,
+                    );
+                  },
                 ),
               ),
             ],
-          );
-        },
+          ),
+        ),
       );
     }
 
+    // 移动端布局保持不变
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -299,6 +361,97 @@ class _MainShellState extends State<MainShell> {
               _rightPane = const WorkspaceBlank();
             });
           },
+        ),
+      ),
+    );
+  }
+}
+
+// 窗口控制按钮组件
+class WindowButtons extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        if (Platform.isMacOS) ...[
+          // macOS 风格的按钮 (红黄绿)
+          _MacWindowButton(
+            color: Colors.red.shade400,
+            onPressed: appWindow.close,
+          ),
+          const SizedBox(width: 8),
+          _MacWindowButton(
+            color: Colors.orange.shade400,
+            onPressed: appWindow.minimize,
+          ),
+          const SizedBox(width: 8),
+          _MacWindowButton(
+            color: Colors.green.shade400,
+            onPressed: appWindow.maximizeOrRestore,
+          ),
+        ] else ...[
+          // Windows/Linux 风格的按钮
+          MinimizeWindowButton(
+            colors: WindowButtonColors(
+              iconNormal: isDark ? Colors.white : Colors.black,
+              iconMouseDown: isDark ? Colors.white : Colors.black,
+              iconMouseOver: isDark ? Colors.white : Colors.black,
+              normal: Colors.transparent,
+              mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
+              mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
+            ),
+          ),
+          MaximizeWindowButton(
+            colors: WindowButtonColors(
+              iconNormal: isDark ? Colors.white : Colors.black,
+              iconMouseDown: isDark ? Colors.white : Colors.black,
+              iconMouseOver: isDark ? Colors.white : Colors.black,
+              normal: Colors.transparent,
+              mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
+              mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
+            ),
+          ),
+          CloseWindowButton(
+            colors: WindowButtonColors(
+              iconNormal: isDark ? Colors.white : Colors.black,
+              iconMouseDown: Colors.white,
+              iconMouseOver: Colors.white,
+              normal: Colors.transparent,
+              mouseOver: Colors.red,
+              mouseDown: Colors.red.shade700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// macOS 风格窗口按钮
+class _MacWindowButton extends StatelessWidget {
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _MacWindowButton({
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
       ),
     );
