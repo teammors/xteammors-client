@@ -21,6 +21,7 @@ dependencies:
   gallery_saver: ^2.3.2
   url_launcher: ^6.3.0
   bitsdojo_window: ^0.1.6
+  window_manager: ^0.3.9
 
 
 dev_dependencies:

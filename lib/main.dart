@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
@@ -13,18 +14,22 @@ import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
 import 'viewmodels/theme_viewmodel.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const XteammorsApp());
 
-  // 初始化窗口
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
-    doWhenWindowReady(() {
-      final initialSize = Size(1200, 800);
-      appWindow.minSize = initialSize;
-      appWindow.size = initialSize;
-      appWindow.alignment = Alignment.center;
-      appWindow.title = "Xteammors";
-      appWindow.show();
+    await windowManager.ensureInitialized();
+    final options = WindowOptions(
+      size: const Size(1200, 800),
+      minimumSize: const Size(1200, 800),
+      center: true,
+      title: 'Xteammors',
+      titleBarStyle: TitleBarStyle.hidden,
+    );
+    windowManager.waitUntilReadyToShow(options, () async {
+      await windowManager.show();
+      await windowManager.focus();
     });
   }
 }
@@ -120,9 +125,9 @@ class _MainShellState extends State<MainShell> {
         return MessagesPage(
           onOpenChat: _isDesktop
               ? (summary) => setState(
-                () => _rightPane =
-                ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
-          )
+                    () => _rightPane =
+                        ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
+                  )
               : null,
         );
       case 1:
@@ -157,10 +162,10 @@ class _MainShellState extends State<MainShell> {
         children: [
           const SizedBox(width: 12),
           // macOS 风格的窗口控制按钮
-          if (Platform.isMacOS) ...[
-            WindowButtons(),
-            const Spacer(),
-          ],
+          // if (Platform.isMacOS) ...[
+          //   WindowButtons(),
+          //   const Spacer(),
+          // ],
           // 应用标题
           Expanded(
             child: MoveWindow(
@@ -179,7 +184,7 @@ class _MainShellState extends State<MainShell> {
           // Windows/Linux 风格的窗口控制按钮
           if (!Platform.isMacOS) ...[
             const Spacer(),
-            WindowButtons(),
+            // WindowButtons(),
           ],
         ],
       ),
@@ -224,10 +229,11 @@ class _MainShellState extends State<MainShell> {
                                 indicatorColor: isDark
                                     ? Colors.white.withValues(alpha: 0.3)
                                     : Theme.of(context)
-                                    .colorScheme
-                                    .outline
-                                    .withValues(alpha: 0.5),
-                                iconTheme: MaterialStateProperty.resolveWith((states) {
+                                        .colorScheme
+                                        .outline
+                                        .withValues(alpha: 0.5),
+                                iconTheme:
+                                    MaterialStateProperty.resolveWith((states) {
                                   if (states.contains(MaterialState.selected)) {
                                     return IconThemeData(
                                         color: isDark
@@ -235,13 +241,15 @@ class _MainShellState extends State<MainShell> {
                                             : Colors.white);
                                   }
                                   return IconThemeData(
-                                      color:
-                                      isDark ? Colors.grey[500] : Colors.grey[700]);
+                                      color: isDark
+                                          ? Colors.grey[500]
+                                          : Colors.grey[700]);
                                 }),
                               ),
                               child: NavigationBar(
                                 labelBehavior:
-                                NavigationDestinationLabelBehavior.alwaysHide,
+                                    NavigationDestinationLabelBehavior
+                                        .alwaysHide,
                                 selectedIndex: _selectedIndex,
                                 destinations: const [
                                   NavigationDestination(
@@ -250,11 +258,14 @@ class _MainShellState extends State<MainShell> {
                                       ),
                                       label: ''),
                                   NavigationDestination(
-                                      icon: Icon(Icons.people_outline), label: ''),
+                                      icon: Icon(Icons.people_outline),
+                                      label: ''),
                                   NavigationDestination(
-                                      icon: Icon(Icons.smart_toy_outlined), label: ''),
+                                      icon: Icon(Icons.smart_toy_outlined),
+                                      label: ''),
                                   NavigationDestination(
-                                      icon: Icon(Icons.settings_outlined), label: ''),
+                                      icon: Icon(Icons.settings_outlined),
+                                      label: ''),
                                 ],
                                 onDestinationSelected: (index) {
                                   setState(() {
@@ -269,7 +280,8 @@ class _MainShellState extends State<MainShell> {
                         GestureDetector(
                           behavior: HitTestBehavior.translucent,
                           onHorizontalDragUpdate: (details) {
-                            final newSplit = (_split + details.delta.dx / total).clamp(
+                            final newSplit =
+                                (_split + details.delta.dx / total).clamp(
                               _minSplit,
                               _maxSplit,
                             );
@@ -328,7 +340,7 @@ class _MainShellState extends State<MainShell> {
         data: NavigationBarThemeData(
           height: 56,
           backgroundColor:
-          Theme.of(context).colorScheme.surfaceContainerHighest,
+              Theme.of(context).colorScheme.surfaceContainerHighest,
           indicatorColor: isDark
               ? Colors.white.withValues(alpha: 0.18)
               : Colors.black.withValues(alpha: 0.08),
@@ -368,66 +380,67 @@ class _MainShellState extends State<MainShell> {
 }
 
 // 窗口控制按钮组件
-class WindowButtons extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        if (Platform.isMacOS) ...[
-          // macOS 风格的按钮 (红黄绿)
-          _MacWindowButton(
-            color: Colors.red.shade400,
-            onPressed: appWindow.close,
-          ),
-          const SizedBox(width: 8),
-          _MacWindowButton(
-            color: Colors.orange.shade400,
-            onPressed: appWindow.minimize,
-          ),
-          const SizedBox(width: 8),
-          _MacWindowButton(
-            color: Colors.green.shade400,
-            onPressed: appWindow.maximizeOrRestore,
-          ),
-        ] else ...[
-          // Windows/Linux 风格的按钮
-          MinimizeWindowButton(
-            colors: WindowButtonColors(
-              iconNormal: isDark ? Colors.white : Colors.black,
-              iconMouseDown: isDark ? Colors.white : Colors.black,
-              iconMouseOver: isDark ? Colors.white : Colors.black,
-              normal: Colors.transparent,
-              mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
-              mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
-            ),
-          ),
-          MaximizeWindowButton(
-            colors: WindowButtonColors(
-              iconNormal: isDark ? Colors.white : Colors.black,
-              iconMouseDown: isDark ? Colors.white : Colors.black,
-              iconMouseOver: isDark ? Colors.white : Colors.black,
-              normal: Colors.transparent,
-              mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
-              mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
-            ),
-          ),
-          CloseWindowButton(
-            colors: WindowButtonColors(
-              iconNormal: isDark ? Colors.white : Colors.black,
-              iconMouseDown: Colors.white,
-              iconMouseOver: Colors.white,
-              normal: Colors.transparent,
-              mouseOver: Colors.red,
-              mouseDown: Colors.red.shade700,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
+// class WindowButtons extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+//
+//     return Row(
+//       children: [
+//         if (Platform.isMacOS) ...[
+//           // macOS 风格的按钮 (红黄绿)
+//           _MacWindowButton(
+//             color: Colors.red.shade400,
+//             onPressed: appWindow.close,
+//           ),
+//           const SizedBox(width: 8),
+//           _MacWindowButton(
+//             color: Colors.orange.shade400,
+//             onPressed: appWindow.minimize,
+//           ),
+//           const SizedBox(width: 8),
+//           _MacWindowButton(
+//             color: Colors.green.shade400,
+//             onPressed: appWindow.maximizeOrRestore,
+//           ),
+//         ] else ...
+//         [
+//           // Windows/Linux 风格的按钮
+//           MinimizeWindowButton(
+//             colors: WindowButtonColors(
+//               iconNormal: isDark ? Colors.white : Colors.black,
+//               iconMouseDown: isDark ? Colors.white : Colors.black,
+//               iconMouseOver: isDark ? Colors.white : Colors.black,
+//               normal: Colors.transparent,
+//               mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
+//               mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
+//             ),
+//           ),
+//           MaximizeWindowButton(
+//             colors: WindowButtonColors(
+//               iconNormal: isDark ? Colors.white : Colors.black,
+//               iconMouseDown: isDark ? Colors.white : Colors.black,
+//               iconMouseOver: isDark ? Colors.white : Colors.black,
+//               normal: Colors.transparent,
+//               mouseOver: isDark ? Colors.grey[800] : Colors.grey[300],
+//               mouseDown: isDark ? Colors.grey[700] : Colors.grey[400],
+//             ),
+//           ),
+//           CloseWindowButton(
+//             colors: WindowButtonColors(
+//               iconNormal: isDark ? Colors.white : Colors.black,
+//               iconMouseDown: Colors.white,
+//               iconMouseOver: Colors.white,
+//               normal: Colors.transparent,
+//               mouseOver: Colors.red,
+//               mouseDown: Colors.red.shade700,
+//             ),
+//           ),
+//         ],
+//       ],
+//     );
+//   }
+// }
 
 // macOS 风格窗口按钮
 class _MacWindowButton extends StatelessWidget {
