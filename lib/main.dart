@@ -79,6 +79,9 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
             elevation: 0,
+            shape: const Border(
+              bottom: BorderSide(color: Color(0x1F000000), width: 0.5),
+            ),
             titleTextStyle: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -91,6 +94,9 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
             backgroundColor: Colors.grey[900],
             foregroundColor: Colors.white,
             elevation: 0,
+            shape: const Border(
+              bottom: BorderSide(color: Color(0x1FFFFFFF), width: 0.5),
+            ),
             titleTextStyle: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -156,11 +162,19 @@ class _MainShellState extends State<MainShell> {
   Widget _buildTitleBar() {
     return Container(
       width: double.infinity,
-      height: 50,
-      color: Theme.of(context).colorScheme.background,
+      height: 35,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.background,
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+            width: 0.8,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          const SizedBox(width: 12),
+          // const SizedBox(width: 12),
           // macOS 风格的窗口控制按钮
           // if (Platform.isMacOS) ...[
           //   WindowButtons(),
@@ -171,7 +185,7 @@ class _MainShellState extends State<MainShell> {
             child: MoveWindow(
               child: Center(
                 child: Text(
-                  _titles[_selectedIndex],
+                  "xTeammors",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -182,10 +196,10 @@ class _MainShellState extends State<MainShell> {
             ),
           ),
           // Windows/Linux 风格的窗口控制按钮
-          if (!Platform.isMacOS) ...[
-            const Spacer(),
-            // WindowButtons(),
-          ],
+          // if (!Platform.isMacOS) ...[
+          //   const Spacer(),
+          //   // WindowButtons(),
+          // ],
         ],
       ),
     );
