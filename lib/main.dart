@@ -54,6 +54,7 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
       state: this,
       child: MaterialApp(
         title: 'Xteammors',
+        debugShowCheckedModeBanner: false,
         theme: _themeVM.lightTheme,
         darkTheme: _themeVM.darkTheme,
         themeMode: _dark ? ThemeMode.dark : ThemeMode.light,

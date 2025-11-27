@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
+import '../utils/toast_utils.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../viewmodels/messages_viewmodel.dart';
 
@@ -388,8 +390,6 @@ class _ChatPageState extends State<ChatPage> {
                               fontSize: 12)),
                     ],
                   ),
-                  
-                  
                 ],
               ),
             ),
@@ -1342,6 +1342,7 @@ class _VideoPlayerDialog extends StatefulWidget {
 class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
   late final VideoPlayerController _controller;
   bool _ready = false;
+  bool _isPlaying = true;
 
   @override
   void initState() {
@@ -1363,13 +1364,112 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: AspectRatio(
-        aspectRatio: _ready ? _controller.value.aspectRatio : 16 / 9,
-        child: _ready
-            ? VideoPlayer(_controller)
-            : const Center(child: CircularProgressIndicator()),
+      child: Stack(
+        children: [
+          AspectRatio(
+            aspectRatio: _ready ? _controller.value.aspectRatio : 16 / 9,
+            child: _ready
+                ? VideoPlayer(_controller)
+                : const Center(child: CircularProgressIndicator()),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: _isPlaying ? 'Pause' : 'Play',
+                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white),
+                  onPressed: () {
+                    if (!_ready) return;
+                    if (_isPlaying) {
+                      _controller.pause();
+                    } else {
+                      _controller.play();
+                    }
+                    setState(() => _isPlaying = !_isPlaying);
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Download',
+                  icon: const Icon(Icons.download, color: Colors.white),
+                  onPressed: _downloadToDesktop,
+                ),
+                IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _downloadToDesktop() async {
+    try {
+      final uri = Uri.parse(widget.url);
+      final client = HttpClient();
+      final req = await client.getUrl(uri);
+      final resp = await req.close();
+      if (resp.statusCode != 200) {
+        if (mounted) {
+          ToastUtils.showTopToast(
+            context: context,
+            message: 'Download failed',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            icon: Icons.info_outline,
+          );
+        }
+
+        return;
+      }
+      final bytes =
+          await resp.fold<List<int>>(<int>[], (acc, data) => acc..addAll(data));
+      final downloadsDir = await getDownloadsDirectory();
+      final dirPath = downloadsDir?.path ??
+          (Platform.environment['HOME'] != null
+              ? '${Platform.environment['HOME']}/Downloads'
+              : (await getTemporaryDirectory()).path);
+      final last = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+      final dot = last.lastIndexOf('.');
+      String ext = 'mp4';
+      if (dot != -1 && dot + 1 < last.length) {
+        final e = last.substring(dot + 1).toLowerCase();
+        if (e.isNotEmpty && e.length <= 5) {
+          ext = e;
+        }
+      }
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'video_${ts}.$ext';
+      final file = File('$dirPath/$fileName');
+      await file.writeAsBytes(bytes);
+      if (mounted) {
+        ToastUtils.showTopToast(
+          context: context,
+          message: 'Video saved to download',
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          icon: Icons.info_outline,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ToastUtils.showTopToast(
+          context: context,
+          message: 'Download error',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          icon: Icons.info_outline,
+        );
+      }
+    }
   }
 }
 
