@@ -22,12 +22,15 @@ dependencies:
   url_launcher: ^6.3.0
   bitsdojo_window: ^0.1.6
   window_manager: ^0.3.9
+  drift: ^2.29.0
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  drift_dev: ^2.29.0
+  build_runner: ^2.4.8
 
 flutter:
   uses-material-design: true
