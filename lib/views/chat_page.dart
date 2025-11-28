@@ -356,17 +356,15 @@ class _ChatPageState extends State<ChatPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+      //backgroundColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor:
-            isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+        backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
         foregroundColor: isDark ? Colors.white : Colors.black,
         titleSpacing: 0,
         title: Row(
           children: [
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             // 根据聊天类型显示不同的图标
             Container(
               width: 40,

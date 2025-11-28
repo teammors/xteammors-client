@@ -16,11 +16,33 @@ class SettingsPage extends StatelessWidget {
     return SafeArea(
       child: ListView(
         children: [
-          Padding(padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: Container(
               height: 56,
-              color: Colors.white,
-            ),),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+                border: Border(
+                  bottom: BorderSide(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -64,6 +86,7 @@ class SettingsPage extends StatelessWidget {
               },
             ),
           ),
+
           // Divider(
           //   height: 1,
           //   thickness: 0.5,

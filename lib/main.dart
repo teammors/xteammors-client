@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:provider/provider.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
@@ -13,6 +14,7 @@ import 'views/chat_page.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
 import 'viewmodels/theme_viewmodel.dart';
+import 'data/app_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,10 +46,13 @@ class XteammorsApp extends StatefulWidget {
 class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
   final _themeVM = const ThemeViewModel();
   bool _dark = false;
+  late final AppDatabase _db;
 
   @override
   void initState() {
     super.initState();
+    _db = AppDatabase.makeDefault();
+    _prepareDb();
     _bootstrapTheme();
   }
 
@@ -58,6 +63,12 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
         _dark = t == AppTheme.dark;
       });
     }
+  }
+
+  Future<void> _prepareDb() async {
+    try {
+      await _db.customStatement('SELECT 1');
+    } catch (_) {}
   }
 
   @override
@@ -71,41 +82,44 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
   Widget build(BuildContext context) {
     return AppStateScope(
       state: this,
-      child: MaterialApp(
-        title: 'Xteammors',
-        debugShowCheckedModeBanner: false,
-        theme: _themeVM.lightTheme.copyWith(
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0,
-            shape: const Border(
-              bottom: BorderSide(color: Color(0x1F000000), width: 0.5),
-            ),
-            titleTextStyle: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-          ),
-        ),
-        darkTheme: _themeVM.darkTheme.copyWith(
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.grey[900],
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: const Border(
-              bottom: BorderSide(color: Color(0x1FFFFFFF), width: 0.5),
-            ),
-            titleTextStyle: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
+      child: Provider<AppDatabase>.value(
+        value: _db,
+        child: MaterialApp(
+          title: 'Xteammors',
+          debugShowCheckedModeBanner: false,
+          theme: _themeVM.lightTheme.copyWith(
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              shape: const Border(
+                bottom: BorderSide(color: Color(0x1F000000), width: 0.5),
+              ),
+              titleTextStyle: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
             ),
           ),
+          darkTheme: _themeVM.darkTheme.copyWith(
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.grey[900],
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: const Border(
+                bottom: BorderSide(color: Color(0x1FFFFFFF), width: 0.5),
+              ),
+              titleTextStyle: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
+          home: const MainShell(),
         ),
-        themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
-        home: const MainShell(),
       ),
     );
   }
