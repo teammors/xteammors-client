@@ -42,6 +42,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _showSearchBar = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  int? _editingIndex;
   ChatMessage? _replyingTo;
 
   @override
@@ -234,6 +235,10 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() {
     final t = _textController.text.trim();
     if (t.isEmpty) return;
+    if (_editingIndex != null) {
+      _commitEdit();
+      return;
+    }
     final now = DateTime.now();
     final hh = now.hour.toString().padLeft(2, '0');
     final mm = now.minute.toString().padLeft(2, '0');
@@ -301,6 +306,72 @@ class _ChatPageState extends State<ChatPage> {
       } else {
         _inputFocusNode.requestFocus();
       }
+    });
+  }
+
+  void _startEdit(int index) {
+    final msg = widget.viewModel.messages[index];
+    if (!(msg.isMe) ||
+        !(msg.type == MessageType.text || msg.type == MessageType.emoji)) {
+      return;
+    }
+    setState(() {
+      _replyingTo = null;
+      _editingIndex = index;
+      _textController.text =
+          msg.type == MessageType.text ? (msg.text ?? '') : (msg.emoji ?? '');
+      _hasText = _textController.text.isNotEmpty;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _inputFocusNode.requestFocus();
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _editingIndex = null;
+    });
+  }
+
+  void _commitEdit() {
+    final t = _textController.text.trim();
+    if (_editingIndex == null || t.isEmpty) return;
+    final idx = _editingIndex!;
+    final orig = widget.viewModel.messages[idx];
+    if (!(orig.type == MessageType.text || orig.type == MessageType.emoji)) {
+      return;
+    }
+    final updated = ChatMessage(
+      type: orig.type,
+      isMe: orig.isMe,
+      text: orig.type == MessageType.text ? t : null,
+      emoji: orig.type == MessageType.emoji ? t : orig.emoji,
+      imageUrl: orig.imageUrl,
+      imageWidth: orig.imageWidth,
+      imageHeight: orig.imageHeight,
+      videoUrl: orig.videoUrl,
+      videoWidth: orig.videoWidth,
+      videoHeight: orig.videoHeight,
+      videoThumbUrl: orig.videoThumbUrl,
+      fileName: orig.fileName,
+      fileSize: orig.fileSize,
+      fileUrl: orig.fileUrl,
+      voiceDurationSec: orig.voiceDurationSec,
+      voiceUrl: orig.voiceUrl,
+      status: orig.status,
+      time: orig.time,
+      senderName: orig.senderName,
+      replyType: orig.replyType,
+      replyPreview: orig.replyPreview,
+      replyThumbUrl: orig.replyThumbUrl,
+      isEdited: true,
+      isSelected: orig.isSelected,
+    );
+    setState(() {
+      widget.viewModel.messages[idx] = updated;
+      _editingIndex = null;
+      _textController.clear();
+      _hasText = false;
     });
   }
 
@@ -761,6 +832,39 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
+          if (_editingIndex != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.06),
+                border: Border(
+                  top: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                  bottom: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                      child: _buildEditingPreview(context,
+                          widget.viewModel.messages[_editingIndex!], isDark)),
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        size: 20),
+                    onPressed: _cancelEdit,
+                  ),
+                ],
+              ),
+            ),
           if (_replyingTo != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -854,22 +958,25 @@ class _ChatPageState extends State<ChatPage> {
             });
           },
         ),
-        PopupMenuItem(
-          height: 34,
-          child: Row(
-            children: [
-              Icon(Icons.edit_calendar_outlined,
-                  size: 16, color: Theme.of(context).colorScheme.onSurface),
-              const SizedBox(width: 12),
-              Text('Edit',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface)),
-            ],
+        if (widget.viewModel.messages[index].isMe &&
+            (widget.viewModel.messages[index].type == MessageType.text ||
+                widget.viewModel.messages[index].type == MessageType.emoji))
+          PopupMenuItem(
+            height: 34,
+            child: Row(
+              children: [
+                Icon(Icons.edit_calendar_outlined,
+                    size: 16, color: Theme.of(context).colorScheme.onSurface),
+                const SizedBox(width: 12),
+                Text('Edit',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface)),
+              ],
+            ),
+            onTap: () {
+              _startEdit(index);
+            },
           ),
-          onTap: () {
-            // 编辑消息逻辑
-          },
-        ),
         PopupMenuItem(
           height: 34,
           child: Row(
@@ -976,6 +1083,11 @@ class _ChatPageState extends State<ChatPage> {
       // 菜单关闭后的处理
       _clearSelection();
     });
+  }
+
+  Widget _buildEditingPreview(
+      BuildContext context, ChatMessage m, bool isDark) {
+    return _buildReplyPreview(context, m, isDark);
   }
 
   Widget _buildReplyPreview(BuildContext context, ChatMessage m, bool isDark) {
