@@ -42,6 +42,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _showSearchBar = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  ChatMessage? _replyingTo;
 
   @override
   void initState() {
@@ -236,17 +237,57 @@ class _ChatPageState extends State<ChatPage> {
     final now = DateTime.now();
     final hh = now.hour.toString().padLeft(2, '0');
     final mm = now.minute.toString().padLeft(2, '0');
+    MessageType? rType;
+    String? rPreview;
+    String? rThumb;
+    if (_replyingTo != null) {
+      switch (_replyingTo!.type) {
+        case MessageType.text:
+          rType = MessageType.text;
+          rPreview = _replyingTo!.text ?? '';
+          break;
+        case MessageType.image:
+          rType = MessageType.image;
+          rThumb = _replyingTo!.imageUrl;
+          rPreview = '图片';
+          break;
+        case MessageType.video:
+          rType = MessageType.video;
+          rThumb = _replyingTo!.videoThumbUrl;
+          rPreview = '视频';
+          break;
+        case MessageType.voice:
+          rType = MessageType.voice;
+          final d = _replyingTo!.voiceDurationSec ?? 0;
+          final mm2 = (d ~/ 60).toString().padLeft(2, '0');
+          final ss2 = (d % 60).toString().padLeft(2, '0');
+          rPreview = '语音 $mm2:$ss2';
+          break;
+        case MessageType.file:
+          rType = MessageType.file;
+          rPreview = '文件 ${_replyingTo!.fileName ?? ''}';
+          break;
+        case MessageType.emoji:
+          rType = MessageType.emoji;
+          rPreview = _replyingTo!.emoji ?? '';
+          break;
+      }
+    }
     final m = ChatMessage(
       type: MessageType.text,
       text: t,
       isMe: true,
       time: '$hh:$mm',
       status: ReadMark.singleGrey,
+      replyType: rType,
+      replyPreview: rPreview,
+      replyThumbUrl: rThumb,
     );
     setState(() {
       widget.viewModel.messages.add(m);
       _textController.clear();
       _hasText = false;
+      _replyingTo = null;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -352,14 +393,14 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       //backgroundColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+        backgroundColor:
+            Theme.of(context).colorScheme.secondary.withOpacity(0.08),
         foregroundColor: isDark ? Colors.white : Colors.black,
         titleSpacing: 0,
         title: Row(
@@ -720,6 +761,42 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
+          if (_replyingTo != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.06),
+                border: Border(
+                  top: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                  bottom: BorderSide(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withValues(alpha: 0.2)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                      child: _buildReplyPreview(context, _replyingTo!, isDark)),
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _replyingTo = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
           ChatInput(
             isDark: isDark,
             textController: _textController,
@@ -768,7 +845,13 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
           onTap: () {
-            // 回复消息逻辑
+            final message = widget.viewModel.messages[index];
+            setState(() {
+              _replyingTo = message;
+            });
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _inputFocusNode.requestFocus();
+            });
           },
         ),
         PopupMenuItem(
@@ -893,5 +976,100 @@ class _ChatPageState extends State<ChatPage> {
       // 菜单关闭后的处理
       _clearSelection();
     });
+  }
+
+  Widget _buildReplyPreview(BuildContext context, ChatMessage m, bool isDark) {
+    final cs = Theme.of(context).colorScheme;
+    switch (m.type) {
+      case MessageType.text:
+        return Row(
+          children: [
+            const Icon(Icons.reply, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                m.text ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: cs.onSurface, fontSize: 13),
+              ),
+            ),
+          ],
+        );
+      case MessageType.image:
+        return Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: m.imageUrl != null
+                    ? Image.network(m.imageUrl!, fit: BoxFit.cover)
+                    : const ColoredBox(color: Colors.grey),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text('图片',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+          ],
+        );
+      case MessageType.video:
+        return Row(
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: m.videoThumbUrl != null
+                        ? Image.network(m.videoThumbUrl!, fit: BoxFit.cover)
+                        : const ColoredBox(color: Colors.black12),
+                  ),
+                ),
+                const Icon(Icons.play_arrow, size: 16, color: Colors.white),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Text('视频',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+          ],
+        );
+      case MessageType.voice:
+        return Row(
+          children: [
+            Icon(Icons.graphic_eq, size: 20, color: cs.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Text('语音消息',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+          ],
+        );
+      case MessageType.file:
+        return Row(
+          children: [
+            Icon(Icons.insert_drive_file, size: 20, color: cs.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                m.fileName ?? '文件',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: cs.onSurface, fontSize: 13),
+              ),
+            ),
+          ],
+        );
+      case MessageType.emoji:
+        return Row(
+          children: [
+            const Icon(Icons.reply, size: 16),
+            const SizedBox(width: 8),
+            Text(m.emoji ?? '', style: const TextStyle(fontSize: 20)),
+          ],
+        );
+    }
   }
 }
