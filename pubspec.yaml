@@ -23,6 +23,7 @@ dependencies:
   bitsdojo_window: ^0.1.6
   window_manager: ^0.3.9
   drift: ^2.29.0
+  emoji_picker_flutter: ^4.4.0
 
 
 dev_dependencies:

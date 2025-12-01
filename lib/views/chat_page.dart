@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'chat/chat_bubble.dart';
 import 'chat/chat_input.dart';
 import 'chat/video_player_dialog.dart';
@@ -44,6 +45,8 @@ class _ChatPageState extends State<ChatPage> {
   final FocusNode _searchFocusNode = FocusNode();
   int? _editingIndex;
   ChatMessage? _replyingTo;
+  final LayerLink _emojiLayerLink = LayerLink();
+  OverlayEntry? _emojiOverlay;
 
   @override
   void initState() {
@@ -278,9 +281,11 @@ class _ChatPageState extends State<ChatPage> {
           break;
       }
     }
+    final onlyEmoji = _isEmojiOnly(t);
     final m = ChatMessage(
-      type: MessageType.text,
-      text: t,
+      type: onlyEmoji ? MessageType.emoji : MessageType.text,
+      text: onlyEmoji ? null : t,
+      emoji: onlyEmoji ? t : null,
       isMe: true,
       time: '$hh:$mm',
       status: ReadMark.singleGrey,
@@ -460,6 +465,7 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _selectedMessages.clear();
     });
+    _hideEmojiOverlay();
   }
 
   @override
@@ -865,6 +871,7 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
+          // emoji picker shown via overlay entry anchored to emoji icon
           if (_replyingTo != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -909,6 +916,8 @@ class _ChatPageState extends State<ChatPage> {
             focusNode: _inputFocusNode,
             isRecording: _isRecording,
             onMicPressed: _toggleRecord,
+            onEmojiPressed: _toggleEmojiOverlay,
+            emojiAnchorLink: _emojiLayerLink,
           ),
         ],
       ),
@@ -931,6 +940,8 @@ class _ChatPageState extends State<ChatPage> {
         _selectedMessages.add(index);
       }
     });
+    _hideEmojiOverlay();
+    _hideEmojiOverlay();
 
     showMenu(
       context: context,
@@ -1083,6 +1094,102 @@ class _ChatPageState extends State<ChatPage> {
       // 菜单关闭后的处理
       _clearSelection();
     });
+  }
+
+  // [Removed duplicate earlier definitions]
+
+  void _toggleEmojiOverlay() {
+    if (_emojiOverlay != null) {
+      _hideEmojiOverlay();
+      return;
+    }
+    final overlay = Overlay.of(context);
+    if (overlay == null) return;
+    _emojiOverlay = OverlayEntry(
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _hideEmojiOverlay,
+                child: const SizedBox.shrink(),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10, bottom: 56),
+                child: Material(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: SizedBox(
+                    width: 400,
+                    height: 300,
+                    child: EmojiPicker(
+                      textEditingController: _textController,
+                      onEmojiSelected: (c, e) {},
+                      config: Config(
+                        height: 300,
+                        emojiViewConfig: EmojiViewConfig(
+                          columns: 7,
+                          backgroundColor: isDark
+                              ? const Color(0xFF1A1A1A)
+                              : const Color(0xFFF5F5F5),
+                        ),
+                        categoryViewConfig: CategoryViewConfig(
+                          backgroundColor: isDark
+                              ? const Color(0xFF1A1A1A)
+                              : const Color(0xFFF5F5F5),
+                          iconColor:
+                              isDark ? Colors.grey[400]! : Colors.grey[700]!,
+                          iconColorSelected: const Color(0xFF0088CC),
+                          indicatorColor: const Color(0xFF0088CC),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    overlay.insert(_emojiOverlay!);
+  }
+
+  void _hideEmojiOverlay() {
+    _emojiOverlay?.remove();
+    _emojiOverlay = null;
+  }
+
+  bool _isEmojiOnly(String input) {
+    final s = input.trim();
+    if (s.isEmpty) return false;
+    bool hasEmoji = false;
+    for (final cp in s.runes) {
+      if (cp == 0x20) continue; // space
+      final isEmoji = (cp >= 0x1F300 &&
+              cp <=
+                  0x1FAFF) || // Misc Symbols & Pictographs .. Symbols & Pictographs Extended-A
+          (cp >= 0x1F600 && cp <= 0x1F64F) || // Emoticons
+          (cp >= 0x1F680 && cp <= 0x1F6FF) || // Transport & Map
+          (cp >= 0x2600 && cp <= 0x27BF) || // Misc symbols
+          (cp >= 0x1F1E6 && cp <= 0x1F1FF) || // Regional Indicator Symbols
+          (cp >= 0x1F900 &&
+              cp <= 0x1F9FF) || // Supplemental Symbols and Pictographs
+          (cp >= 0x1FA70 &&
+              cp <= 0x1FAFF) || // Symbols & Pictographs Extended-A
+          (cp >= 0xFE00 && cp <= 0xFE0F) || // Variation selectors
+          cp == 0x200D; // ZWJ
+      if (!isEmoji) return false;
+      hasEmoji = true;
+    }
+    return hasEmoji;
   }
 
   Widget _buildEditingPreview(
