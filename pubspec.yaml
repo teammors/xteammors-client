@@ -25,6 +25,14 @@ dependencies:
   drift: ^2.29.0
   emoji_picker_flutter: ^4.4.0
 
+  image_picker: ^1.2.1
+  camera_platform_interface: ^2.8.0
+  camera_windows: ^0.2.6
+  camera_macos: ^0.0.9
+  image_picker_platform_interface: ^2.10.0
+  image_picker_windows: ^0.2.1+1
+  image_picker_macos: ^0.2.2
+
 
 dev_dependencies:
   flutter_test:

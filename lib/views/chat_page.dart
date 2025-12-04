@@ -7,6 +7,9 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:ui' as ui;
+import '../utils/camera_delegate.dart';
 import 'chat/chat_bubble.dart';
 import 'chat/chat_input.dart';
 import 'chat/video_player_dialog.dart';
@@ -918,6 +921,7 @@ class _ChatPageState extends State<ChatPage> {
             onMicPressed: _toggleRecord,
             onEmojiPressed: _toggleEmojiOverlay,
             emojiAnchorLink: _emojiLayerLink,
+            onCameraPressed: _capturePhoto,
           ),
         ],
       ),
@@ -1191,6 +1195,101 @@ class _ChatPageState extends State<ChatPage> {
     }
     return hasEmoji;
   }
+
+  Future<void> _capturePhoto() async {
+    _hideEmojiOverlay();
+    final picker = ImagePicker();
+    try {
+      final xfile = (Platform.isIOS || Platform.isAndroid)
+          ? await picker.pickImage(source: ImageSource.camera, imageQuality: 90)
+          : await WindowsCameraDelegate().takePhoto() ;  //picker.pickImage(source: ImageSource.gallery);
+      if (xfile == null) return;
+      final bytes = await xfile.readAsBytes();
+      final codecImg = await ui.instantiateImageCodec(bytes);
+      final frame = await codecImg.getNextFrame();
+      final w = frame.image.width;
+      final h = frame.image.height;
+      final now = DateTime.now();
+      final hh = now.hour.toString().padLeft(2, '0');
+      final mm = now.minute.toString().padLeft(2, '0');
+      MessageType? rType;
+      String? rPreview;
+      String? rThumb;
+      if (_replyingTo != null) {
+        switch (_replyingTo!.type) {
+          case MessageType.text:
+            rType = MessageType.text;
+            rPreview = _replyingTo!.text ?? '';
+            break;
+          case MessageType.image:
+            rType = MessageType.image;
+            rThumb = _replyingTo!.imageUrl;
+            rPreview = '图片';
+            break;
+          case MessageType.video:
+            rType = MessageType.video;
+            rThumb = _replyingTo!.videoThumbUrl;
+            rPreview = '视频';
+            break;
+          case MessageType.voice:
+            rType = MessageType.voice;
+            final d = _replyingTo!.voiceDurationSec ?? 0;
+            final mm2 = (d ~/ 60).toString().padLeft(2, '0');
+            final ss2 = (d % 60).toString().padLeft(2, '0');
+            rPreview = '语音 $mm2:$ss2';
+            break;
+          case MessageType.file:
+            rType = MessageType.file;
+            rPreview = '文件 ${_replyingTo!.fileName ?? ''}';
+            break;
+          case MessageType.emoji:
+            rType = MessageType.emoji;
+            rPreview = _replyingTo!.emoji ?? '';
+            break;
+        }
+      }
+      final m = ChatMessage(
+        type: MessageType.image,
+        imageUrl: xfile.path,
+        imageWidth: w,
+        imageHeight: h,
+        isMe: true,
+        time: '$hh:$mm',
+        status: ReadMark.singleGrey,
+        replyType: rType,
+        replyPreview: rPreview,
+        replyThumbUrl: rThumb,
+      );
+      setState(() {
+        widget.viewModel.messages.add(m);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+        _inputFocusNode.requestFocus();
+      });
+    } catch (_) {}
+  }
+
+  // Future<bool> _checkCameraAvailability() async {
+  //   if (Platform.isMacOS || Platform.isWindows) {
+  //     // 桌面平台可能不支持相机
+  //     try {
+  //       // 尝试调用一个测试方法
+  //       await ImagePicker().getImageSources();
+  //       return true;
+  //     } catch (e) {
+  //       print("相机检查失败: $e");
+  //       return false;
+  //     }
+  //   }
+  //   return true; // 移动平台默认支持
+  // }
 
   Widget _buildEditingPreview(
       BuildContext context, ChatMessage m, bool isDark) {

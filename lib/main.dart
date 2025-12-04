@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
+import 'package:xteammors/utils/camera_delegate.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
@@ -17,7 +18,9 @@ import 'viewmodels/theme_viewmodel.dart';
 import 'data/app_database.dart';
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
+  initCamera();
   runApp(const XteammorsApp());
 
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
@@ -33,6 +36,13 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
+  }
+}
+
+void initCamera() {
+  if (Platform.isWindows) {
+    /// Add camera support to Image Picker on Windows.
+    WindowsCameraDelegate.register();
   }
 }
 

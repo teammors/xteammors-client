@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/messages_viewmodel.dart';
 import 'avatar.dart';
@@ -39,14 +40,16 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMe = message.isMe;
-    final isMedia = message.type == MessageType.image || message.type == MessageType.video;
+    final isMedia =
+        message.type == MessageType.image || message.type == MessageType.video;
     final isEmoji = message.type == MessageType.emoji;
 
     Color bubbleColor;
     Color textColor;
 
     if (isMe) {
-      bubbleColor = (isMedia || isEmoji) ? Colors.transparent : const Color(0xFF0088CC);
+      bubbleColor =
+          (isMedia || isEmoji) ? Colors.transparent : const Color(0xFF0088CC);
       textColor = (isMedia || isEmoji) ? Colors.white : Colors.white;
     } else {
       bubbleColor = (isMedia || isEmoji)
@@ -60,45 +63,66 @@ class ChatBubble extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => onShowMenu(context, null),
       onDoubleTap: () => _handleDoubleTap(context),
-      onSecondaryTapDown: (details) => onShowMenu(context, details.globalPosition),
+      onSecondaryTapDown: (details) =>
+          onShowMenu(context, details.globalPosition),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: isSelected
-              ? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08))
+              ? (isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.08))
               : Colors.transparent,
         ),
         child: Row(
-          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment:
+              isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showAvatar) Avatar(isDark: isDark, senderName: message.senderName),
+            if (showAvatar)
+              Avatar(isDark: isDark, senderName: message.senderName),
             Flexible(
               child: Container(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.75),
                 child: Column(
-                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
                     if (showAvatar && message.senderName != null)
                       Padding(
                         padding: const EdgeInsets.only(left: 8, bottom: 2),
                         child: Text(
                           message.senderName!,
-                          style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600], fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                              fontWeight: FontWeight.w500),
                         ),
                       ),
                     Container(
                       padding: isMedia
                           ? EdgeInsets.zero
-                          : (isEmoji ? const EdgeInsets.all(5) : const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                      decoration: BoxDecoration(color: bubbleColor, borderRadius: BorderRadius.circular(5)),
+                          : (isEmoji
+                              ? const EdgeInsets.all(5)
+                              : const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8)),
+                      decoration: BoxDecoration(
+                          color: bubbleColor,
+                          borderRadius: BorderRadius.circular(5)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (message.replyType != null)
-                            ReplyHeader(type: message.replyType!, preview: message.replyPreview, thumbUrl: message.replyThumbUrl, isDark: isDark, isMe: isMe),
+                            ReplyHeader(
+                                type: message.replyType!,
+                                preview: message.replyPreview,
+                                thumbUrl: message.replyThumbUrl,
+                                isDark: isDark,
+                                isMe: isMe),
                           _bubbleContent(message, textColor, context,
                               isVoicePlaying: isVoicePlaying,
                               onVoiceTap: onVoiceTap,
@@ -110,16 +134,30 @@ class ChatBubble extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Padding(
-                      padding: EdgeInsets.only(left: isMe ? 0 : (showAvatar ? 8 : 0), right: isMe ? 0 : 8),
+                      padding: EdgeInsets.only(
+                          left: isMe ? 0 : (showAvatar ? 8 : 0),
+                          right: isMe ? 0 : 8),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        mainAxisAlignment: isMe
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
                         children: [
                           if (message.time != null)
-                            Text(message.time!, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[500] : Colors.grey[600])),
+                            Text(message.time!,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.grey[500]
+                                        : Colors.grey[600])),
                           if (message.isEdited) ...[
                             const SizedBox(width: 6),
-                            Text('edited', style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[500] : Colors.grey[600])),
+                            Text('edited',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.grey[500]
+                                        : Colors.grey[600])),
                           ],
                           if (isMe && message.status != null) ...[
                             const SizedBox(width: 4),
@@ -147,7 +185,8 @@ class ChatBubble extends StatelessWidget {
       VoidCallback? onFileTap}) {
     switch (m.type) {
       case MessageType.text:
-        return Text(m.text ?? '', style: TextStyle(fontSize: 16, height: 1.4, color: textColor));
+        return Text(m.text ?? '',
+            style: TextStyle(fontSize: 16, height: 1.4, color: textColor));
       case MessageType.emoji:
         return Text(m.emoji ?? '', style: const TextStyle(fontSize: 60));
       case MessageType.image:
@@ -173,28 +212,41 @@ class ChatBubble extends StatelessWidget {
               width: rw,
               height: rh,
               child: m.imageUrl != null
-                  ? Image.network(
-                      m.imageUrl!,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (c, child, progress) {
-                        if (progress == null) return child;
-                        return Container(
-                          color: Colors.grey[800],
-                          child: Center(
-                              child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
-                                  ))),
-                        );
-                      },
-                      errorBuilder: (c, e, s) => ColoredBox(
-                        color: Colors.grey[800]!,
-                        child: const Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    )
+                  ? (_isNetworkUrl(m.imageUrl!)
+                      ? Image.network(
+                          m.imageUrl!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (c, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: Colors.grey[800],
+                              child: Center(
+                                  child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.grey[400]!),
+                                      ))),
+                            );
+                          },
+                          errorBuilder: (c, e, s) => ColoredBox(
+                            color: Colors.grey[800]!,
+                            child: const Icon(Icons.broken_image,
+                                color: Colors.grey),
+                          ),
+                        )
+                      : Image.file(
+                          File(m.imageUrl!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => ColoredBox(
+                            color: Colors.grey[800]!,
+                            child: const Icon(Icons.broken_image,
+                                color: Colors.grey),
+                          ),
+                        ))
                   : const ColoredBox(color: Colors.grey),
             ),
           );
@@ -239,13 +291,16 @@ class ChatBubble extends StatelessWidget {
                                       height: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.grey[400]!),
                                       ))),
                             );
                           },
                           errorBuilder: (c, e, s) => ColoredBox(
                             color: Colors.grey[800]!,
-                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                            child: const Icon(Icons.broken_image,
+                                color: Colors.grey),
                           ),
                         )
                       : const ColoredBox(color: Colors.black12),
@@ -254,8 +309,10 @@ class ChatBubble extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                child: const Icon(Icons.play_arrow, size: 32, color: Colors.white),
+                decoration: const BoxDecoration(
+                    color: Colors.black54, shape: BoxShape.circle),
+                child:
+                    const Icon(Icons.play_arrow, size: 32, color: Colors.white),
               ),
             ],
           );
@@ -270,7 +327,8 @@ class ChatBubble extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(isVoicePlaying ? Icons.stop : Icons.play_arrow, size: 24, color: textColor),
+              Icon(isVoicePlaying ? Icons.stop : Icons.play_arrow,
+                  size: 24, color: textColor),
               const SizedBox(width: 8),
               Text('$mm:$ss', style: TextStyle(color: textColor, fontSize: 14)),
             ],
@@ -289,9 +347,12 @@ class ChatBubble extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(m.fileName ?? 'File', style: TextStyle(color: textColor, fontSize: 14)),
+                    Text(m.fileName ?? 'File',
+                        style: TextStyle(color: textColor, fontSize: 14)),
                     if (m.fileSize != null)
-                      Text(m.fileSize!, style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12)),
+                      Text(m.fileSize!,
+                          style: TextStyle(
+                              color: textColor.withOpacity(0.7), fontSize: 12)),
                   ],
                 ),
               ],
@@ -299,5 +360,9 @@ class ChatBubble extends StatelessWidget {
           ),
         );
     }
+  }
+
+  bool _isNetworkUrl(String u) {
+    return u.startsWith('http://') || u.startsWith('https://');
   }
 }

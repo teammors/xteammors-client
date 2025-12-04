@@ -10,6 +10,7 @@ class ChatInput extends StatelessWidget {
   final VoidCallback? onMicPressed;
   final VoidCallback? onEmojiPressed;
   final LayerLink? emojiAnchorLink;
+  final VoidCallback? onCameraPressed;
 
   const ChatInput({
     required this.isDark,
@@ -21,6 +22,7 @@ class ChatInput extends StatelessWidget {
     this.onMicPressed,
     this.onEmojiPressed,
     this.emojiAnchorLink,
+    this.onCameraPressed,
   });
 
   @override
@@ -138,7 +140,7 @@ class ChatInput extends StatelessWidget {
               icon: Icon(Icons.photo_camera_outlined,
                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                   size: 20),
-              onPressed: () {},
+              onPressed: onCameraPressed,
             ),
             const SizedBox(width: 4),
             Expanded(
