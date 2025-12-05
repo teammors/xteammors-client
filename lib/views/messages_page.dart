@@ -71,8 +71,9 @@ class MessagesPage extends StatelessWidget {
             separatorBuilder: (_, __) => Divider(
               height: 0,
               thickness: 0.5,
-              indent: 0,
-              color: cs.outlineVariant.withValues(alpha: 0.2),
+              indent: 16,
+              endIndent: 12,
+              color: cs.outlineVariant.withValues(alpha: 0.05),
             ),
             itemBuilder: (context, index) {
               final item = viewModel.items[index];
@@ -121,7 +122,7 @@ class _MessageItemState extends State<_MessageItem> {
       onExit: (_) => setState(() => _hover = false),
       child: Container(
         color: _hover ? cs.surfaceContainerHighest.withValues(alpha: 0.12) : Colors.transparent,
-        height: 80,
+        height: 70,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: InkWell(
           onTap: () {

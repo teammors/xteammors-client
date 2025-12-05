@@ -1200,9 +1200,11 @@ class _ChatPageState extends State<ChatPage> {
     _hideEmojiOverlay();
     final picker = ImagePicker();
     try {
+
       final xfile = (Platform.isIOS || Platform.isAndroid)
           ? await picker.pickImage(source: ImageSource.camera, imageQuality: 90)
-          : await WindowsCameraDelegate().takePhoto() ;  //picker.pickImage(source: ImageSource.gallery);
+          : await picker.pickImage(source: ImageSource.gallery);
+
       if (xfile == null) return;
       final bytes = await xfile.readAsBytes();
       final codecImg = await ui.instantiateImageCodec(bytes);
