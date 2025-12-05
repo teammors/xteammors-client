@@ -23,7 +23,6 @@ class UserProfilePage extends StatelessWidget {
               if (onDelete != null) {
                 onDelete!();
               } else {
-
                 ToastUtils.showTopToast(
                   context: context,
                   message: '删除联系人未实现',
@@ -31,7 +30,6 @@ class UserProfilePage extends StatelessWidget {
                   textColor: Colors.white,
                   icon: Icons.info_outline,
                 );
-
               }
             },
           ),
@@ -161,7 +159,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.call_outlined, color: cs.onSurface),
-                    title: Text('Voice Call',
+                    title: Text('语音',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -172,10 +170,21 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.block, color: cs.onSurface),
-                    title: Text('Block',
+                    title: Text('屏蔽',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
-                    trailing:
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('(${vm.blocked ? '屏蔽' : '未屏蔽'})',
+                            style: TextStyle(
+                                color: vm.blocked
+                                    ? const Color(0xFF1DB954)
+                                    : Colors.red,
+                                fontSize: 12)),
+                        const SizedBox(width: 6),
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+                      ],
+                    ),
                     onTap: () {},
                   );
               }

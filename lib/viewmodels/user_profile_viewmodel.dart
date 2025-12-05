@@ -21,6 +21,7 @@ class UserProfileViewModel {
   final String? avatarUrl;
   final String? bio;
   final bool online;
+  final bool blocked;
   final List<GroupSummary> sharedGroups;
 
   const UserProfileViewModel({
@@ -29,16 +30,17 @@ class UserProfileViewModel {
     this.avatarUrl,
     this.bio,
     this.online = false,
+    this.blocked = false,
     this.sharedGroups = const [],
   });
 
   const UserProfileViewModel.sample()
       : userId = 'u_001',
         name = 'Alice Johnson',
-        avatarUrl =
-            'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
+        avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
         bio = 'Mobile developer. Coffee lover. Building delightful chat UIs.',
         online = true,
+        blocked = false,
         sharedGroups = const [
           GroupSummary(
             id: 'g1',
@@ -59,4 +61,3 @@ class UserProfileViewModel {
           ),
         ];
 }
-
