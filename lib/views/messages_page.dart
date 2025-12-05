@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/messages_viewmodel.dart';
 import 'chat_page.dart';
+import 'user_profile_page.dart';
+import '../viewmodels/user_profile_viewmodel.dart';
 import '../viewmodels/chat_viewmodel.dart';
 
 class MessagesPage extends StatelessWidget {
@@ -51,15 +53,18 @@ class MessagesPage extends StatelessWidget {
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
-                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                borderSide:
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
-                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                borderSide:
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
-                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
+                borderSide:
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
               ),
               isDense: true,
             ),
@@ -121,7 +126,9 @@ class _MessageItemState extends State<_MessageItem> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Container(
-        color: _hover ? cs.surfaceContainerHighest.withValues(alpha: 0.12) : Colors.transparent,
+        color: _hover
+            ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
+            : Colors.transparent,
         height: 70,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: InkWell(
@@ -131,7 +138,16 @@ class _MessageItemState extends State<_MessageItem> {
             } else {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ChatPage(viewModel: ChatViewModel.fromSummary(item)),
+                  builder: (_) => ChatPage(
+                    viewModel: ChatViewModel.fromSummary(item),
+                    onOpenProfile: (UserProfileViewModel vm) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => UserProfilePage(vm: vm),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             }
@@ -180,9 +196,12 @@ class _MessageItemState extends State<_MessageItem> {
                             ),
                           ),
                         ),
-                        if (item.retentionLabel != null && item.retentionColor != null) ...[
+                        if (item.retentionLabel != null &&
+                            item.retentionColor != null) ...[
                           const SizedBox(width: 8),
-                          _RetentionChip(label: item.retentionLabel!, color: item.retentionColor!),
+                          _RetentionChip(
+                              label: item.retentionLabel!,
+                              color: item.retentionColor!),
                         ],
                         const SizedBox(width: 8),
                         Text(

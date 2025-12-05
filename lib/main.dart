@@ -157,8 +157,12 @@ class _MainShellState extends State<MainShell> {
         return MessagesPage(
           onOpenChat: _isDesktop
               ? (summary) => setState(
-                    () => _rightPane =
-                        ChatPage(viewModel: ChatViewModel.fromSummary(summary)),
+                    () => _rightPane = ChatPage(
+                      viewModel: ChatViewModel.fromSummary(summary),
+                      onOpenProfile: (profileVm) => setState(
+                        () => _rightPane = UserProfilePage(vm: profileVm),
+                      ),
+                    ),
                   )
               : null,
         );
@@ -183,7 +187,12 @@ class _MainShellState extends State<MainShell> {
                         ],
                       ),
                       onOpenChat: (vm) => setState(
-                        () => _rightPane = ChatPage(viewModel: vm),
+                        () => _rightPane = ChatPage(
+                          viewModel: vm,
+                          onOpenProfile: (profileVm) => setState(
+                            () => _rightPane = UserProfilePage(vm: profileVm),
+                          ),
+                        ),
                       ),
                     );
                   })

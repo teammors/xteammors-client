@@ -10,6 +10,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:ui' as ui;
 import '../utils/camera_delegate.dart';
+import '../viewmodels/user_profile_viewmodel.dart';
 import 'chat/chat_bubble.dart';
 import 'chat/chat_input.dart';
 import 'chat/video_player_dialog.dart';
@@ -24,7 +25,8 @@ import '../viewmodels/messages_viewmodel.dart';
 
 class ChatPage extends StatefulWidget {
   final ChatViewModel viewModel;
-  const ChatPage({super.key, required this.viewModel});
+  final void Function(UserProfileViewModel)? onOpenProfile;
+  const ChatPage({super.key, required this.viewModel, this.onOpenProfile});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -50,6 +52,22 @@ class _ChatPageState extends State<ChatPage> {
   ChatMessage? _replyingTo;
   final LayerLink _emojiLayerLink = LayerLink();
   OverlayEntry? _emojiOverlay;
+
+  void _openProfile() {
+    if (widget.viewModel.chatType != ChatType.private) return;
+    final vm = UserProfileViewModel(
+      userId: 'unknown',
+      name: widget.viewModel.partnerName,
+      avatarUrl: null,
+      bio: null,
+      online: widget.viewModel.lastSeen.toLowerCase().contains('online') ||
+          widget.viewModel.lastSeen.contains('在线'),
+      sharedGroups: const [],
+    );
+    if (widget.onOpenProfile != null) {
+      widget.onOpenProfile!(vm);
+    }
+  }
 
   @override
   void initState() {
@@ -487,40 +505,48 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             const SizedBox(width: 10),
             // 根据聊天类型显示不同的图标
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isDark ? Colors.grey[700] : Colors.grey[300],
-              ),
-              child: Icon(
-                widget.viewModel.chatType == ChatType.group
-                    ? Icons.group
-                    : Icons.person,
-                size: 20,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+            GestureDetector(
+              onTap: _openProfile,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? Colors.grey[700] : Colors.grey[300],
+                ),
+                child: Icon(
+                  widget.viewModel.chatType == ChatType.group
+                      ? Icons.group
+                      : Icons.person,
+                  size: 20,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.viewModel.partnerName,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    widget.viewModel.lastSeen,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+              child: GestureDetector(
+                onTap: _openProfile,
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.viewModel.partnerName,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    Text(
+                      widget.viewModel.lastSeen,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1200,7 +1226,6 @@ class _ChatPageState extends State<ChatPage> {
     _hideEmojiOverlay();
     final picker = ImagePicker();
     try {
-
       final xfile = (Platform.isIOS || Platform.isAndroid)
           ? await picker.pickImage(source: ImageSource.camera, imageQuality: 90)
           : await picker.pickImage(source: ImageSource.gallery);
