@@ -131,7 +131,7 @@ class _MessageItemState extends State<_MessageItem> {
             } else {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ChatPage(viewModel: ChatViewModel.groupChat())
+                  builder: (_) => ChatPage(viewModel: ChatViewModel.fromSummary(item)),
                 ),
               );
             }

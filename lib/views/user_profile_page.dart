@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import '../utils/toast_utils.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
+import 'chat_page.dart';
+import '../viewmodels/chat_viewmodel.dart';
 
-class UserProfilePage extends StatelessWidget {
+class UserProfilePage extends StatefulWidget {
   final UserProfileViewModel vm;
   final VoidCallback? onDelete;
   const UserProfilePage(
       {super.key,
       this.vm = const UserProfileViewModel.sample(),
       this.onDelete});
+
+  @override
+  State<UserProfilePage> createState() => _UserProfilePageState();
+}
+
+class _UserProfilePageState extends State<UserProfilePage> {
+  late bool _blocked;
+
+  @override
+  void initState() {
+    super.initState();
+    _blocked = widget.vm.blocked;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +35,8 @@ class UserProfilePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
-              if (onDelete != null) {
-                onDelete!();
+              if (widget.onDelete != null) {
+                widget.onDelete!();
               } else {
                 ToastUtils.showTopToast(
                   context: context,
@@ -56,8 +71,8 @@ class UserProfilePage extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              _avatar(vm.avatarUrl, 40),
-              if (vm.online)
+              _avatar(widget.vm.avatarUrl, 40),
+              if (widget.vm.online)
                 Positioned(
                   bottom: -2,
                   right: -2,
@@ -75,15 +90,15 @@ class UserProfilePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Text(vm.name,
+        Text(widget.vm.name,
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface)),
         const SizedBox(height: 6),
-        if (vm.bio != null)
-          Text(vm.bio!,
+        if (widget.vm.bio != null)
+          Text(widget.vm.bio!,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
       ],
@@ -95,7 +110,8 @@ class UserProfilePage extends StatelessWidget {
       return CircleAvatar(backgroundImage: NetworkImage(url), radius: radius);
     }
     return CircleAvatar(
-        radius: radius, child: Text(vm.name.isNotEmpty ? vm.name[0] : '?'));
+        radius: radius,
+        child: Text(widget.vm.name.isNotEmpty ? widget.vm.name[0] : '?'));
   }
 
   Widget _panelTitle(String title, ColorScheme cs) {
@@ -141,7 +157,16 @@ class UserProfilePage extends StatelessWidget {
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChatPage(
+                            viewModel:
+                                ChatViewModel.privateFromName(widget.vm.name),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 case 1:
                   return ListTile(
@@ -159,7 +184,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.call_outlined, color: cs.onSurface),
-                    title: Text('语音',
+                    title: Text('Voice Call',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -170,14 +195,14 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.block, color: cs.onSurface),
-                    title: Text('屏蔽',
+                    title: Text('Block',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('(${vm.blocked ? '屏蔽' : '未屏蔽'})',
+                        Text('(${_blocked ? 'Blocked' : 'UnBlocked'})',
                             style: TextStyle(
-                                color: vm.blocked
+                                color: _blocked
                                     ? const Color(0xFF1DB954)
                                     : Colors.red,
                                 fontSize: 12)),
@@ -185,7 +210,28 @@ class UserProfilePage extends StatelessWidget {
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
                       ],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      setState(() {
+                        _blocked = !_blocked;
+                      });
+                      if (_blocked) {
+                        ToastUtils.showTopToast(
+                          context: context,
+                          message: 'This contact has been blocked.',
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                          icon: Icons.info_outline,
+                        );
+                      } else {
+                        ToastUtils.showTopToast(
+                          context: context,
+                          message: 'The block has been removed.',
+                          backgroundColor: Colors.green,
+                          textColor: Colors.white,
+                          icon: Icons.info_outline,
+                        );
+                      }
+                    },
                   );
               }
             },
@@ -211,12 +257,12 @@ class UserProfilePage extends StatelessWidget {
           child: ListView.separated(
             physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemCount: vm.sharedGroups.length,
+            itemCount: widget.vm.sharedGroups.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
             itemBuilder: (c, i) {
-              final g = vm.sharedGroups[i];
+              final g = widget.vm.sharedGroups[i];
               return ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -226,7 +272,16 @@ class UserProfilePage extends StatelessWidget {
                 subtitle: Text('${g.members} 人',
                     style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
                 trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatPage(
+                        viewModel: ChatViewModel.groupFromName(g.name,
+                            onlineCount: g.members),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

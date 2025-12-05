@@ -253,6 +253,18 @@ class ChatViewModel {
     );
   }
 
+  factory ChatViewModel.groupFromName(String name, {int onlineCount = 0}) {
+    return ChatViewModel(
+      partnerName: name,
+      lastSeen: onlineCount > 0 ? '在线 $onlineCount人' : 'last seen recently',
+      chatType: ChatType.group,
+      messages: [
+        ChatMessage(type: MessageType.text, text: '欢迎加入群聊', isMe: false, time: '09:00'),
+        ChatMessage(type: MessageType.text, text: 'Hi', isMe: true, time: '09:01', status: ReadMark.singleGrey),
+      ],
+    );
+  }
+
   // 兼容旧代码
   factory ChatViewModel.fromSummary(MessageSummary s) {
     return s.isGroup ? ChatViewModel.groupChat() : ChatViewModel.privateChat();
