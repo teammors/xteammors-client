@@ -34,8 +34,8 @@ class _ContactsPageState extends State<ContactsPage> {
     final cs = Theme.of(context).colorScheme;
     final list = widget.viewModel.contacts
         .where((c) =>
-            _query.isEmpty ||
-            c.name.toLowerCase().contains(_query.toLowerCase()))
+    _query.isEmpty ||
+        c.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
     return Column(
@@ -74,17 +74,17 @@ class _ContactsPageState extends State<ContactsPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                    BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
+                BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
               ),
               isDense: true,
             ),
@@ -95,7 +95,7 @@ class _ContactsPageState extends State<ContactsPage> {
             itemCount: list.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
-                indent: 58,
+                indent: 55,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
             itemBuilder: (c, i) {
               final ct = list[i];
@@ -103,43 +103,65 @@ class _ContactsPageState extends State<ContactsPage> {
               return MouseRegion(
                 onEnter: (_) => setState(() => _hoverIndex = i),
                 onExit: (_) => setState(() => _hoverIndex = null),
-                child: Container(
-                  height: 60,
-                  color: hovered
-                      ? cs.primary.withValues(alpha: 0.06)
-                      : Colors.transparent,
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                    leading: _buildAvatar(ct),
-                    title: Text(ct.name,
-                        style: TextStyle(fontSize: 14, color: cs.onSurface)),
-                    subtitle: _buildSubtitle(ct, cs),
-                    onTap: () {
-                      if (widget.onOpenProfile != null) {
-                        widget.onOpenProfile!(ct);
-                      } else {
-                        final vm = UserProfileViewModel(
-                          userId: ct.id,
-                          name: ct.name,
-                          avatarUrl: ct.avatarUrl,
-                          bio: 'This person is very mysterious; he left nothing behind.',
-                          online: ct.online,
-                          sharedGroups: const [
-                            GroupSummary(
-                                id: 'g1', name: 'Flutter Devs', members: 128),
-                            GroupSummary(
-                                id: 'g2', name: 'Design Weekly', members: 42),
-                            GroupSummary(
-                                id: 'g3', name: 'Project X Team', members: 16),
-                          ],
-                        );
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => UserProfilePage(vm: vm)),
-                        );
-                      }
-                    },
+                child: InkWell(
+                  onTap: () {
+                    if (widget.onOpenProfile != null) {
+                      widget.onOpenProfile!(ct);
+                    } else {
+                      final vm = UserProfileViewModel(
+                        userId: ct.id,
+                        name: ct.name,
+                        avatarUrl: ct.avatarUrl,
+                        bio: 'This person is very mysterious; he left nothing behind.',
+                        online: ct.online,
+                        sharedGroups: const [
+                          GroupSummary(
+                              id: 'g1', name: 'Flutter Devs', members: 128),
+                          GroupSummary(
+                              id: 'g2', name: 'Design Weekly', members: 42),
+                          GroupSummary(
+                              id: 'g3', name: 'Project X Team', members: 16),
+                        ],
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => UserProfilePage(vm: vm)),
+                      );
+                    }
+                  },
+                  child: Container(
+                    height: 55,
+                    color: hovered
+                        ? cs.primary.withValues(alpha: 0.06)
+                        : Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
+                      children: [
+                        // 头像
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: _buildAvatar(ct),
+                        ),
+                        // 姓名和状态
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center, // 垂直居中
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ct.name,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                              _buildSubtitle(ct, cs),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -162,12 +184,12 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget _buildSubtitle(Contact c, ColorScheme cs) {
     if (c.online) {
       return Text('Online',
-          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 10));
+          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 11));
     }
     final ls = c.lastSeen;
     if (ls == null) {
       return Text('last seen unknown',
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10));
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11));
     }
     final now = DateTime.now();
     String text;
@@ -178,6 +200,6 @@ class _ContactsPageState extends State<ContactsPage> {
     } else {
       text = 'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
     }
-    return Text(text, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10));
+    return Text(text, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11));
   }
 }
