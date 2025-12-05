@@ -215,7 +215,7 @@ class _MessageItemState extends State<_MessageItem> {
                 Expanded(
                   child: ClipRect(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
