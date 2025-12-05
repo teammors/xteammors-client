@@ -160,7 +160,22 @@ class _MainShellState extends State<MainShell> {
                     () => _rightPane = ChatPage(
                       viewModel: ChatViewModel.fromSummary(summary),
                       onOpenProfile: (profileVm) => setState(
-                        () => _rightPane = UserProfilePage(vm: profileVm),
+                        () => _rightPane = UserProfilePage(
+                          vm: profileVm,
+                          onOpenChat: (chatVm) => setState(
+                            () => _rightPane = ChatPage(
+                              viewModel: chatVm,
+                              onOpenProfile: (pvm) => setState(
+                                () => _rightPane = UserProfilePage(
+                                  vm: pvm,
+                                  onOpenChat: (cvm) => setState(
+                                    () => _rightPane = ChatPage(viewModel: cvm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   )
@@ -190,7 +205,23 @@ class _MainShellState extends State<MainShell> {
                         () => _rightPane = ChatPage(
                           viewModel: vm,
                           onOpenProfile: (profileVm) => setState(
-                            () => _rightPane = UserProfilePage(vm: profileVm),
+                            () => _rightPane = UserProfilePage(
+                              vm: profileVm,
+                              onOpenChat: (chatVm) => setState(
+                                () => _rightPane = ChatPage(
+                                  viewModel: chatVm,
+                                  onOpenProfile: (pvm) => setState(
+                                    () => _rightPane = UserProfilePage(
+                                      vm: pvm,
+                                      onOpenChat: (cvm) => setState(
+                                        () => _rightPane =
+                                            ChatPage(viewModel: cvm),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
