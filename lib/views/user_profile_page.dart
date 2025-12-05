@@ -32,7 +32,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('User Profile'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),

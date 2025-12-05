@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../viewmodels/messages_viewmodel.dart';
 import 'chat_page.dart';
 import 'user_profile_page.dart';
+import 'group_profile_page.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
 import '../viewmodels/chat_viewmodel.dart';
 
@@ -144,6 +145,13 @@ class _MessageItemState extends State<_MessageItem> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => UserProfilePage(vm: vm),
+                        ),
+                      );
+                    },
+                    onOpenGroup: (groupVm) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => GroupProfilePage(vm: groupVm),
                         ),
                       );
                     },

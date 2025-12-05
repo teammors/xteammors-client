@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:ui' as ui;
 import '../utils/camera_delegate.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
+import '../viewmodels/group_profile_viewmodel.dart';
 import 'chat/chat_bubble.dart';
 import 'chat/chat_input.dart';
 import 'chat/video_player_dialog.dart';
@@ -26,7 +27,12 @@ import '../viewmodels/messages_viewmodel.dart';
 class ChatPage extends StatefulWidget {
   final ChatViewModel viewModel;
   final void Function(UserProfileViewModel)? onOpenProfile;
-  const ChatPage({super.key, required this.viewModel, this.onOpenProfile});
+  final void Function(GroupProfileViewModel)? onOpenGroup;
+  const ChatPage(
+      {super.key,
+      required this.viewModel,
+      this.onOpenProfile,
+      this.onOpenGroup});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -52,6 +58,30 @@ class _ChatPageState extends State<ChatPage> {
   ChatMessage? _replyingTo;
   final LayerLink _emojiLayerLink = LayerLink();
   OverlayEntry? _emojiOverlay;
+
+  void _openGroupProfile() {
+    if (widget.viewModel.chatType != ChatType.group) return;
+    final gvm = GroupProfileViewModel(
+      groupId: 'unknown',
+      name: widget.viewModel.partnerName,
+      avatarUrl: null,
+      intro: null,
+      isOwner: false,
+      blocked: false,
+      members: const [],
+    );
+    if (widget.onOpenGroup != null) {
+      widget.onOpenGroup!(gvm);
+    }
+  }
+
+  void _handleAppBarTap() {
+    if (widget.viewModel.chatType == ChatType.group) {
+      _openGroupProfile();
+    } else {
+      _openProfile();
+    }
+  }
 
   void _openProfile() {
     if (widget.viewModel.chatType != ChatType.private) return;
@@ -506,7 +536,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(width: 10),
             // 根据聊天类型显示不同的图标
             GestureDetector(
-              onTap: _openProfile,
+              onTap: _handleAppBarTap,
               behavior: HitTestBehavior.opaque,
               child: Container(
                 width: 40,
@@ -527,7 +557,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: _openProfile,
+                onTap: _handleAppBarTap,
                 behavior: HitTestBehavior.opaque,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

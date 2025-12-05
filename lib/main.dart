@@ -19,6 +19,7 @@ import 'views/user_profile_page.dart';
 import 'viewmodels/user_profile_viewmodel.dart';
 import 'viewmodels/contacts_viewmodel.dart';
 import 'data/app_database.dart';
+import 'views/group_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -177,6 +178,9 @@ class _MainShellState extends State<MainShell> {
                           ),
                         ),
                       ),
+                      onOpenGroup: (groupVm) => setState(
+                        () => _rightPane = GroupProfilePage(vm: groupVm),
+                      ),
                     ),
                   )
               : null,
@@ -222,6 +226,9 @@ class _MainShellState extends State<MainShell> {
                                 ),
                               ),
                             ),
+                          ),
+                          onOpenGroup: (groupVm) => setState(
+                            () => _rightPane = GroupProfilePage(vm: groupVm),
                           ),
                         ),
                       ),
