@@ -42,31 +42,33 @@ class MessagesPage extends StatelessWidget {
             child: Text(
               'Messages',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        SizedBox(height: 10,),
+        Container(
+          height: 55,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search messages',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: const Icon(Icons.search,),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(30),
                 borderSide:
                     BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(30),
                 borderSide:
                     BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(30),
                 borderSide:
                     BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
               ),
@@ -74,6 +76,7 @@ class MessagesPage extends StatelessWidget {
             ),
           ),
         ),
+        SizedBox(height: 10,),
         Expanded(
           child: ListView.separated(
             itemCount: viewModel.items.length,
@@ -521,7 +524,7 @@ class _RetentionChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12),
+        style: TextStyle(color: color, fontSize: 10),
       ),
     );
   }
@@ -553,7 +556,7 @@ class _UnreadBadge extends StatelessWidget {
       child: Text(
         sCount,
         style: const TextStyle(
-            color: Colors.white, fontSize: 10,),
+            color: Colors.white, fontSize: 11,),
       ),
     );
   }

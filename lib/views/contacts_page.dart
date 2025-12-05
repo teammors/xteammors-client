@@ -58,15 +58,17 @@ class _ContactsPageState extends State<ContactsPage> {
             child: Text(
               'Contacts',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        SizedBox(height: 10,),
+        Container(
+          height: 55,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search contacts',
@@ -90,6 +92,7 @@ class _ContactsPageState extends State<ContactsPage> {
             ),
           ),
         ),
+        SizedBox(height: 10,),
         Expanded(
           child: ListView.separated(
             itemCount: list.length,
