@@ -182,6 +182,9 @@ class _MainShellState extends State<MainShell> {
                               id: 'g3', name: 'Project X Team', members: 16),
                         ],
                       ),
+                      onOpenChat: (vm) => setState(
+                        () => _rightPane = ChatPage(viewModel: vm),
+                      ),
                     );
                   })
               : null,

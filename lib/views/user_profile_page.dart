@@ -7,10 +7,12 @@ import '../viewmodels/chat_viewmodel.dart';
 class UserProfilePage extends StatefulWidget {
   final UserProfileViewModel vm;
   final VoidCallback? onDelete;
+  final void Function(ChatViewModel)? onOpenChat;
   const UserProfilePage(
       {super.key,
       this.vm = const UserProfileViewModel.sample(),
-      this.onDelete});
+      this.onDelete,
+      this.onOpenChat});
 
   @override
   State<UserProfilePage> createState() => _UserProfilePageState();
@@ -158,14 +160,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ChatPage(
-                            viewModel:
-                                ChatViewModel.privateFromName(widget.vm.name),
+                      final vm = ChatViewModel.privateFromName(widget.vm.name);
+                      if (widget.onOpenChat != null) {
+                        widget.onOpenChat!(vm);
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatPage(viewModel: vm),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                   );
                 case 1:
@@ -273,14 +277,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
                 trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ChatPage(
-                        viewModel: ChatViewModel.groupFromName(g.name,
-                            onlineCount: g.members),
+                  final vm = ChatViewModel.groupFromName(g.name,
+                      onlineCount: g.members);
+                  if (widget.onOpenChat != null) {
+                    widget.onOpenChat!(vm);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ChatPage(viewModel: vm),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               );
             },
