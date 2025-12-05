@@ -80,9 +80,9 @@ class MessagesPage extends StatelessWidget {
             separatorBuilder: (_, __) => Divider(
               height: 0,
               thickness: 0.5,
-              indent: 16,
-              endIndent: 12,
-              color: cs.outlineVariant.withValues(alpha: 0.05),
+              indent: 62,
+              //endIndent: 12,
+              color: cs.outlineVariant.withValues(alpha: 0.2),
             ),
             itemBuilder: (context, index) {
               final item = viewModel.items[index];
@@ -103,9 +103,9 @@ class _ReadMarkIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (mark) {
       case ReadMark.singleGrey:
-        return const Icon(Icons.done, color: Colors.grey, size: 18);
+        return const Icon(Icons.done, color: Colors.grey, size: 14);
       case ReadMark.doubleGreen:
-        return const Icon(Icons.done_all, color: Colors.green, size: 18);
+        return const Icon(Icons.done_all, color: Colors.green, size: 14);
     }
   }
 }
@@ -141,7 +141,7 @@ class _MessageItemState extends State<_MessageItem> {
             : (_hover
                 ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
                 : Colors.transparent),
-        height: 65,
+        height: 60,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: GestureDetector(
           onLongPress: isDesktop ? null : () => _showItemMenu(context, null),
@@ -202,7 +202,7 @@ class _MessageItemState extends State<_MessageItem> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const CircleAvatar(radius: 24),
+                    const CircleAvatar(radius: 20),
                     if (item.isOnline)
                       Positioned(
                         right: -2,
@@ -241,18 +241,18 @@ class _MessageItemState extends State<_MessageItem> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 16,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
-                                    if (item.retentionLabel != null &&
-                                        item.retentionColor != null) ...[
-                                      const SizedBox(width: 8),
-                                      _RetentionChip(
-                                          label: item.retentionLabel!,
-                                          color: item.retentionColor!),
-                                    ],
+                                    // if (item.retentionLabel != null &&
+                                    //     item.retentionColor != null) ...[
+                                    //   const SizedBox(width: 8),
+                                    //   _RetentionChip(
+                                    //       label: item.retentionLabel!,
+                                    //       color: item.retentionColor!),
+                                    // ],
                                   ],
                                 ),
                               ),
@@ -261,7 +261,7 @@ class _MessageItemState extends State<_MessageItem> {
                                 item.time,
                                 style: TextStyle(
                                     color: cs.onSurfaceVariant,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     height: 1.0),
                               ),
                             ],
@@ -276,14 +276,14 @@ class _MessageItemState extends State<_MessageItem> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                       color: cs.onSurfaceVariant,
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       height: 1.0),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 5),
                               if (item.unreadCount > 0) ...[
                                 _UnreadBadge(count: item.unreadCount),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 5),
                               ],
                               _ReadMarkIcon(mark: item.mark),
                             ],
@@ -533,16 +533,27 @@ class _UnreadBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double dHorizontal = 6;
+    
+    String sCount = "$count";
+    if(count>=100){
+      sCount = "99+";
+    }
+
+    if(count > 10){
+      dHorizontal = 4;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: dHorizontal, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.red,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
-        '$count',
+        sCount,
         style: const TextStyle(
-            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            color: Colors.white, fontSize: 10,),
       ),
     );
   }
