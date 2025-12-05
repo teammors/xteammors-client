@@ -5,6 +5,7 @@ import 'user_profile_page.dart';
 import 'group_profile_page.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
 import '../viewmodels/chat_viewmodel.dart';
+import '../utils/toast_utils.dart';
 
 class MessagesPage extends StatelessWidget {
   final MessagesViewModel viewModel;
@@ -130,116 +131,352 @@ class _MessageItemState extends State<_MessageItem> {
         color: _hover
             ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
             : Colors.transparent,
-        height: 70,
+        height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: InkWell(
-          onTap: () {
-            if (widget.onOpenChat != null) {
-              widget.onOpenChat!(item);
-            } else {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChatPage(
-                    viewModel: ChatViewModel.fromSummary(item),
-                    onOpenProfile: (UserProfileViewModel vm) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => UserProfilePage(vm: vm),
-                        ),
-                      );
-                    },
-                    onOpenGroup: (groupVm) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => GroupProfilePage(vm: groupVm),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            }
-          },
-          child: Row(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const CircleAvatar(radius: 24),
-                  if (item.isOnline)
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: cs.surface,
-                            width: 2,
+        child: GestureDetector(
+          onLongPress: () => _showItemMenu(context, null),
+          onSecondaryTapDown: (details) =>
+              _showItemMenu(context, details.globalPosition),
+          child: InkWell(
+            onTap: () {
+              if (widget.onOpenChat != null) {
+                widget.onOpenChat!(item);
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatPage(
+                      viewModel: ChatViewModel.fromSummary(item),
+                      onOpenProfile: (UserProfileViewModel vm) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => UserProfilePage(vm: vm),
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                      onOpenGroup: (groupVm) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => GroupProfilePage(
+                              vm: groupVm,
+                              onOpenMessages: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatPage(
+                                      viewModel: ChatViewModel.groupFromName(
+                                        groupVm.name,
+                                        onlineCount: groupVm.members.length,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              onOpenMemberChat: (cvm) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatPage(viewModel: cvm),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                );
+              }
+            },
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                    const CircleAvatar(radius: 24),
+                    if (item.isOnline)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: cs.surface,
+                              width: 2,
                             ),
                           ),
                         ),
-                        if (item.retentionLabel != null &&
-                            item.retentionColor != null) ...[
-                          const SizedBox(width: 8),
-                          _RetentionChip(
-                              label: item.retentionLabel!,
-                              color: item.retentionColor!),
-                        ],
-                        const SizedBox(width: 8),
-                        Text(
-                          item.time,
-                          style: TextStyle(color: cs.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.message,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: cs.onSurfaceVariant),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _ReadMarkIcon(mark: item.mark),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ClipRect(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (item.retentionLabel != null &&
+                                      item.retentionColor != null)
+                                    _RetentionChip(
+                                        label: item.retentionLabel!,
+                                        color: item.retentionColor!),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              item.time,
+                              style: TextStyle(color: cs.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.message,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: cs.onSurfaceVariant),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (item.unreadCount > 0) ...[
+                              _UnreadBadge(count: item.unreadCount),
+                              const SizedBox(width: 8),
+                            ],
+                            _ReadMarkIcon(mark: item.mark),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showItemMenu(BuildContext context, Offset? position) {
+    final cs = Theme.of(context).colorScheme;
+    final isGroup = widget.item.isGroup;
+
+    final List<PopupMenuItem> desktopItems = isGroup
+        ? [
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.cleaning_services_outlined,
+                    size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Clear all messages',
+                    style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '清空群消息未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.exit_to_app_outlined, size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Leave the group', style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '退出群未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.schedule_outlined, size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Set clear time', style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '设置清理时间未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.notifications_off_outlined,
+                    size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Block notifications',
+                    style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '屏蔽群通知未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+          ]
+        : [
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.cleaning_services_outlined,
+                    size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Clear all messages',
+                    style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '清空消息未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.delete_outline, size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Delete conversations',
+                    style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '删除会话未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.schedule_outlined, size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Set clear time', style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '设置清理时间未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.notifications_off_outlined,
+                    size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Block notifications',
+                    style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '屏蔽通知未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+            PopupMenuItem(
+              height: 34,
+              child: Row(children: [
+                Icon(Icons.block, size: 16, color: cs.onSurface),
+                const SizedBox(width: 12),
+                Text('Block the user', style: TextStyle(color: cs.onSurface)),
+              ]),
+              onTap: () {
+                ToastUtils.showTopToast(
+                    context: context,
+                    message: '屏蔽该用户未实现',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    icon: Icons.info_outline);
+              },
+            ),
+          ];
+
+    if (position != null) {
+      final overlay =
+          Overlay.of(context).context.findRenderObject() as RenderBox?;
+      final size = overlay?.size ?? MediaQuery.of(context).size;
+      final rect = RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        size.width - position.dx,
+        size.height - position.dy,
+      );
+      showMenu(context: context, position: rect, items: desktopItems);
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (ctx) {
+        final tiles = desktopItems.map((e) {
+          final row = e.child as Row;
+          final children = row.children;
+          return ListTile(
+            leading: children.first as Widget,
+            title: children.last as Widget,
+            onTap: () {
+              Navigator.of(ctx).pop();
+              e.onTap?.call();
+            },
+          );
+        }).toList();
+        return SafeArea(
+            child: Column(mainAxisSize: MainAxisSize.min, children: tiles));
+      },
     );
   }
 }
@@ -261,6 +498,27 @@ class _RetentionChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(color: color, fontSize: 12),
+      ),
+    );
+  }
+}
+
+class _UnreadBadge extends StatelessWidget {
+  final int count;
+  const _UnreadBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.red,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }

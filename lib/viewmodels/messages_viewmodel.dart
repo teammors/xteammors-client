@@ -15,6 +15,7 @@ class MessageSummary {
   final String? retentionLabel;
   final Color? retentionColor;
   final bool isGroup;
+  final int unreadCount;
   const MessageSummary({
     required this.name,
     required this.message,
@@ -25,6 +26,7 @@ class MessageSummary {
     this.retentionLabel,
     this.retentionColor,
     this.isGroup = false,
+    this.unreadCount = 0,
   });
 }
 
@@ -43,6 +45,7 @@ class MessagesViewModel {
         retentionLabel: 'H',
         retentionColor: const Color(0xFFC95332),
         isGroup: false,
+        unreadCount: 2,
       ),
       MessageSummary(
         name: 'Bob',
@@ -54,6 +57,7 @@ class MessagesViewModel {
         retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
         isGroup: false,
+        unreadCount: 5,
       ),
       MessageSummary(
         name: 'Charlie',
@@ -65,6 +69,7 @@ class MessagesViewModel {
         retentionLabel: 'M',
         retentionColor: const Color(0xFFF2D863),
         isGroup: false,
+        unreadCount: 0,
       ),
       MessageSummary(
         name: 'Design Team',
@@ -76,6 +81,7 @@ class MessagesViewModel {
         retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
         isGroup: true,
+        unreadCount: 12,
       ),
     ],
   });

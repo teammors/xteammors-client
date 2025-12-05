@@ -24,7 +24,6 @@ class ContactsViewModel {
         Contact(
           id: '1',
           name: 'Alice',
-          avatarUrl: 'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
           online: true,
         ),
         Contact(
@@ -35,8 +34,6 @@ class ContactsViewModel {
         Contact(
           id: '3',
           name: 'Charlie',
-          avatarUrl:
-              'https://avatars.githubusercontent.com/u/1342004?s=200&v=4',
           lastSeen: DateTime.now().subtract(const Duration(hours: 3)),
         ),
         Contact(
@@ -52,8 +49,6 @@ class ContactsViewModel {
         Contact(
           id: '6',
           name: 'Fiona',
-          avatarUrl:
-              'https://avatars.githubusercontent.com/u/14101776?s=200&v=4',
           lastSeen: DateTime.now().subtract(const Duration(minutes: 2)),
         ),
         Contact(

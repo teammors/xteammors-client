@@ -148,7 +148,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   double _split = 0.3;
-  static const double _minSplit = 0.3;
+  static const double _minSplit = 0.2;
   static const double _maxSplit = 0.5;
   Widget _rightPane = const WorkspaceBlank();
 
@@ -179,7 +179,45 @@ class _MainShellState extends State<MainShell> {
                         ),
                       ),
                       onOpenGroup: (groupVm) => setState(
-                        () => _rightPane = GroupProfilePage(vm: groupVm),
+                        () => _rightPane = GroupProfilePage(
+                          vm: groupVm,
+                          onOpenMessages: () => setState(
+                            () => _rightPane = ChatPage(
+                              viewModel: ChatViewModel.groupFromName(
+                                groupVm.name,
+                                onlineCount: groupVm.members.length,
+                              ),
+                              onOpenGroup: (gvm) => setState(
+                                () => _rightPane = GroupProfilePage(vm: gvm),
+                              ),
+                              onOpenProfile: (pvm) => setState(
+                                () => _rightPane = UserProfilePage(
+                                  vm: pvm,
+                                  onOpenChat: (cvm) => setState(
+                                    () => _rightPane = ChatPage(viewModel: cvm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          onOpenMemberChat: (cvm) => setState(
+                            () => _rightPane = ChatPage(
+                              viewModel: cvm,
+                              onOpenGroup: (gvm) => setState(
+                                () => _rightPane = GroupProfilePage(vm: gvm),
+                              ),
+                              onOpenProfile: (pvm) => setState(
+                                () => _rightPane = UserProfilePage(
+                                  vm: pvm,
+                                  onOpenChat: (pcvm) => setState(
+                                    () =>
+                                        _rightPane = ChatPage(viewModel: pcvm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   )
@@ -228,7 +266,48 @@ class _MainShellState extends State<MainShell> {
                             ),
                           ),
                           onOpenGroup: (groupVm) => setState(
-                            () => _rightPane = GroupProfilePage(vm: groupVm),
+                            () => _rightPane = GroupProfilePage(
+                              vm: groupVm,
+                              onOpenMessages: () => setState(
+                                () => _rightPane = ChatPage(
+                                  viewModel: ChatViewModel.groupFromName(
+                                    groupVm.name,
+                                    onlineCount: groupVm.members.length,
+                                  ),
+                                  onOpenGroup: (gvm) => setState(
+                                    () =>
+                                        _rightPane = GroupProfilePage(vm: gvm),
+                                  ),
+                                  onOpenProfile: (pvm) => setState(
+                                    () => _rightPane = UserProfilePage(
+                                      vm: pvm,
+                                      onOpenChat: (cvm) => setState(
+                                        () => _rightPane =
+                                            ChatPage(viewModel: cvm),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              onOpenMemberChat: (cvm) => setState(
+                                () => _rightPane = ChatPage(
+                                  viewModel: cvm,
+                                  onOpenGroup: (gvm) => setState(
+                                    () =>
+                                        _rightPane = GroupProfilePage(vm: gvm),
+                                  ),
+                                  onOpenProfile: (pvm) => setState(
+                                    () => _rightPane = UserProfilePage(
+                                      vm: pvm,
+                                      onOpenChat: (pcvm) => setState(
+                                        () => _rightPane =
+                                            ChatPage(viewModel: pcvm),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),

@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/group_profile_viewmodel.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
+import '../viewmodels/chat_viewmodel.dart';
 import '../utils/toast_utils.dart';
 
-class GroupProfilePage extends StatelessWidget {
+class GroupProfilePage extends StatefulWidget {
   final GroupProfileViewModel vm;
   final void Function(UserProfileViewModel)? onOpenMember;
+  final void Function(ChatViewModel)? onOpenMemberChat;
   final void Function()? onOpenMessages;
   const GroupProfilePage(
       {super.key,
       this.vm = const GroupProfileViewModel.sample(),
       this.onOpenMember,
+      this.onOpenMemberChat,
       this.onOpenMessages});
+
+  @override
+  State<GroupProfilePage> createState() => _GroupProfilePageState();
+}
+
+class _GroupProfilePageState extends State<GroupProfilePage> {
+  late bool _blocked;
+
+  @override
+  void initState() {
+    super.initState();
+    _blocked = widget.vm.blocked;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,17 +51,17 @@ class GroupProfilePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Center(child: _avatar(vm.avatarUrl, 40)),
+        Center(child: _avatar(widget.vm.avatarUrl, 40)),
         const SizedBox(height: 10),
-        Text(vm.name,
+        Text(widget.vm.name,
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface)),
         const SizedBox(height: 6),
-        if (vm.intro != null)
-          Text(vm.intro!,
+        if (widget.vm.intro != null)
+          Text(widget.vm.intro!,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
       ],
@@ -73,8 +89,8 @@ class GroupProfilePage extends StatelessWidget {
           icon: Icons.message_outlined,
           label: 'Messages',
           onTap: () {
-            if (onOpenMessages != null) {
-              onOpenMessages!();
+            if (widget.onOpenMessages != null) {
+              widget.onOpenMessages!();
             } else {
               ToastUtils.showTopToast(
                 context: context,
@@ -101,15 +117,28 @@ class GroupProfilePage extends StatelessWidget {
           icon: Icons.block,
           label: 'Block',
           onTap: () {
-            ToastUtils.showTopToast(
-              context: context,
-              message: '屏蔽群未实现',
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              icon: Icons.info_outline,
-            );
+            setState(() {
+              _blocked = !_blocked;
+            });
+            if (_blocked) {
+              ToastUtils.showTopToast(
+                context: context,
+                message: '已屏蔽该群组',
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                icon: Icons.info_outline,
+              );
+            } else {
+              ToastUtils.showTopToast(
+                context: context,
+                message: '已解除屏蔽群组',
+                backgroundColor: const Color(0xFF1DB954),
+                textColor: Colors.white,
+                icon: Icons.info_outline,
+              );
+            }
           }),
-      vm.isOwner
+      widget.vm.isOwner
           ? _ActionItem(
               icon: Icons.delete_forever_outlined,
               label: 'Dissolve',
@@ -156,6 +185,29 @@ class GroupProfilePage extends StatelessWidget {
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
             itemBuilder: (c, i) {
               final it = items[i];
+              if (it.label == 'Block') {
+                return ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  leading: Icon(it.icon, color: cs.onSurface),
+                  title: Text(it.label,
+                      style: TextStyle(color: cs.onSurface, fontSize: 15)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_blocked ? 'Blocked' : 'UnBlocked',
+                          style: TextStyle(
+                              color: _blocked
+                                  ? Colors.red
+                                  : const Color(0xFF1DB954),
+                              fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+                    ],
+                  ),
+                  onTap: it.onTap,
+                );
+              }
               return ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -176,7 +228,7 @@ class GroupProfilePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelTitle('Members（${vm.members.length}）', cs),
+        _panelTitle('Members（${widget.vm.members.length}成员）', cs),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -188,14 +240,14 @@ class GroupProfilePage extends StatelessWidget {
           child: ListView.separated(
             physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemCount: vm.members.length,
+            itemCount: widget.vm.members.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
             itemBuilder: (c, i) {
-              final m = vm.members[i];
+              final m = widget.vm.members[i];
               return SizedBox(
-                height: 65,
+                height: 60,
                 child: ListTile(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
@@ -212,12 +264,23 @@ class GroupProfilePage extends StatelessWidget {
                   trailing:
                       Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
                   onTap: () {
-                    if (onOpenMember != null) {
-                      onOpenMember!(UserProfileViewModel(
+                    if (widget.onOpenMemberChat != null) {
+                      widget.onOpenMemberChat!(
+                          ChatViewModel.privateFromName(m.name));
+                    } else if (widget.onOpenMember != null) {
+                      widget.onOpenMember!(UserProfileViewModel(
                           userId: m.id,
                           name: m.name,
                           avatarUrl: m.avatarUrl,
                           online: m.online));
+                    } else {
+                      ToastUtils.showTopToast(
+                        context: context,
+                        message: '进入与该用户的聊天未实现',
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        icon: Icons.info_outline,
+                      );
                     }
                   },
                 ),
