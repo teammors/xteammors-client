@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
+import '../utils/toast_utils.dart';
 import '../viewmodels/user_profile_viewmodel.dart';
 
 class UserProfilePage extends StatelessWidget {
   final UserProfileViewModel vm;
+  final VoidCallback? onDelete;
   const UserProfilePage(
-      {super.key, this.vm = const UserProfileViewModel.sample()});
+      {super.key,
+      this.vm = const UserProfileViewModel.sample(),
+      this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              if (onDelete != null) {
+                onDelete!();
+              } else {
+
+                ToastUtils.showTopToast(
+                  context: context,
+                  message: '删除联系人未实现',
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  icon: Icons.info_outline,
+                );
+
+              }
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
@@ -113,7 +139,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.message_outlined, color: cs.onSurface),
-                    title: Text('消息',
+                    title: Text('Messages',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -124,7 +150,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.videocam_outlined, color: cs.onSurface),
-                    title: Text('视频',
+                    title: Text('Videos Call',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -135,7 +161,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.call_outlined, color: cs.onSurface),
-                    title: Text('语音',
+                    title: Text('Voice Call',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -146,7 +172,7 @@ class UserProfilePage extends StatelessWidget {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: Icon(Icons.block, color: cs.onSurface),
-                    title: Text('屏蔽',
+                    title: Text('Block',
                         style: TextStyle(color: cs.onSurface, fontSize: 15)),
                     trailing:
                         Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -164,7 +190,7 @@ class UserProfilePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelTitle('共同群组', cs),
+        _panelTitle('Groups', cs),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
