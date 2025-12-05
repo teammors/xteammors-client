@@ -141,7 +141,7 @@ class _MessageItemState extends State<_MessageItem> {
             : (_hover
                 ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
                 : Colors.transparent),
-        height: 80,
+        height: 65,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: GestureDetector(
           onLongPress: isDesktop ? null : () => _showItemMenu(context, null),
@@ -225,62 +225,71 @@ class _MessageItemState extends State<_MessageItem> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ClipRect(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Wrap(
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8,
-                                runSpacing: 4,
-                                children: [
-                                  Text(
-                                    item.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  if (item.retentionLabel != null &&
-                                      item.retentionColor != null)
-                                    _RetentionChip(
-                                        label: item.retentionLabel!,
-                                        color: item.retentionColor!),
-                                ],
+                                    if (item.retentionLabel != null &&
+                                        item.retentionColor != null) ...[
+                                      const SizedBox(width: 8),
+                                      _RetentionChip(
+                                          label: item.retentionLabel!,
+                                          color: item.retentionColor!),
+                                    ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              item.time,
-                              style: TextStyle(color: cs.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.message,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: cs.onSurfaceVariant),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (item.unreadCount > 0) ...[
-                              _UnreadBadge(count: item.unreadCount),
                               const SizedBox(width: 8),
+                              Text(
+                                item.time,
+                                style: TextStyle(
+                                    color: cs.onSurfaceVariant,
+                                    fontSize: 12,
+                                    height: 1.0),
+                              ),
                             ],
-                            _ReadMarkIcon(mark: item.mark),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 0),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.message,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: cs.onSurfaceVariant,
+                                      fontSize: 13,
+                                      height: 1.0),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (item.unreadCount > 0) ...[
+                                _UnreadBadge(count: item.unreadCount),
+                                const SizedBox(width: 8),
+                              ],
+                              _ReadMarkIcon(mark: item.mark),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

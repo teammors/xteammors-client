@@ -49,7 +49,7 @@ class MessagesViewModel {
       ),
       MessageSummary(
         name: 'Bob',
-        message: 'Can you review the doc?',
+        message: 'Can you review the doc?New mockups are ready',
         time: '13:21',
         mark: ReadMark.singleGrey,
         isOnline: false,

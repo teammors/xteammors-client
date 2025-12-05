@@ -64,3 +64,7 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/icon/xteammorsicon.png"
+
+dependency_overrides:
+  gallery_saver:
+    path: plugins/gallery_saver

@@ -1,4 +1,5 @@
-import 'dart:io' show Platform;
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -26,7 +27,12 @@ void main() async {
   initCamera();
   runApp(const XteammorsApp());
 
-  if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
+  final p = defaultTargetPlatform;
+  final isDesktop = !kIsWeb &&
+      (p == TargetPlatform.macOS ||
+          p == TargetPlatform.windows ||
+          p == TargetPlatform.linux);
+  if (isDesktop) {
     await windowManager.ensureInitialized();
     final options = WindowOptions(
       size: const Size(1200, 800),
@@ -43,7 +49,7 @@ void main() async {
 }
 
 void initCamera() {
-  if (Platform.isWindows) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     /// Add camera support to Image Picker on Windows.
     WindowsCameraDelegate.register();
   }

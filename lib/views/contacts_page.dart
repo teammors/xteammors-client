@@ -95,7 +95,8 @@ class _ContactsPageState extends State<ContactsPage> {
             itemCount: list.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+                indent: 58,
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
             itemBuilder: (c, i) {
               final ct = list[i];
               final hovered = _hoverIndex == i;
@@ -103,6 +104,7 @@ class _ContactsPageState extends State<ContactsPage> {
                 onEnter: (_) => setState(() => _hoverIndex = i),
                 onExit: (_) => setState(() => _hoverIndex = null),
                 child: Container(
+                  height: 60,
                   color: hovered
                       ? cs.primary.withValues(alpha: 0.06)
                       : Colors.transparent,
@@ -111,7 +113,7 @@ class _ContactsPageState extends State<ContactsPage> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                     leading: _buildAvatar(ct),
                     title: Text(ct.name,
-                        style: TextStyle(fontSize: 16, color: cs.onSurface)),
+                        style: TextStyle(fontSize: 14, color: cs.onSurface)),
                     subtitle: _buildSubtitle(ct, cs),
                     onTap: () {
                       if (widget.onOpenProfile != null) {
@@ -121,7 +123,7 @@ class _ContactsPageState extends State<ContactsPage> {
                           userId: ct.id,
                           name: ct.name,
                           avatarUrl: ct.avatarUrl,
-                          bio: '这个人很神秘，什么都没有留下',
+                          bio: 'This person is very mysterious; he left nothing behind.',
                           online: ct.online,
                           sharedGroups: const [
                             GroupSummary(
@@ -151,21 +153,21 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget _buildAvatar(Contact c) {
     if (c.avatarUrl != null && c.avatarUrl!.isNotEmpty) {
       return CircleAvatar(
-          backgroundImage: NetworkImage(c.avatarUrl!), radius: 20);
+          backgroundImage: NetworkImage(c.avatarUrl!), radius: 16);
     }
     return CircleAvatar(
-        radius: 20, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
+        radius: 16, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
   }
 
   Widget _buildSubtitle(Contact c, ColorScheme cs) {
     if (c.online) {
       return Text('Online',
-          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 12));
+          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 10));
     }
     final ls = c.lastSeen;
     if (ls == null) {
       return Text('last seen unknown',
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12));
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10));
     }
     final now = DateTime.now();
     String text;
@@ -174,10 +176,8 @@ class _ContactsPageState extends State<ContactsPage> {
       final mm = ls.minute.toString().padLeft(2, '0');
       text = 'last seen $hh:$mm';
     } else {
-      text =
-          'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
+      text = 'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
     }
-    return Text(text,
-        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12));
+    return Text(text, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10));
   }
 }
