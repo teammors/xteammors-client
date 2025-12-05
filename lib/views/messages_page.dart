@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import '../viewmodels/messages_viewmodel.dart';
 import 'chat_page.dart';
 import 'user_profile_page.dart';
@@ -119,24 +121,33 @@ class _MessageItem extends StatefulWidget {
 
 class _MessageItemState extends State<_MessageItem> {
   bool _hover = false;
+  bool _menuActive = false;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final item = widget.item;
+    final bool isDesktop =
+        kIsWeb || Platform.isMacOS || Platform.isWindows || Platform.isLinux;
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Container(
-        color: _hover
-            ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
-            : Colors.transparent,
+        color: _menuActive
+            ? (isDark
+                ? Colors.white.withValues(alpha: 0.12)
+                : cs.primary.withValues(alpha: 0.12))
+            : (_hover
+                ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
+                : Colors.transparent),
         height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: GestureDetector(
-          onLongPress: () => _showItemMenu(context, null),
-          onSecondaryTapDown: (details) =>
-              _showItemMenu(context, details.globalPosition),
+          onLongPress: isDesktop ? null : () => _showItemMenu(context, null),
+          onSecondaryTapDown: isDesktop
+              ? (details) => _showItemMenu(context, details.globalPosition)
+              : null,
           child: InkWell(
             onTap: () {
               if (widget.onOpenChat != null) {
@@ -281,7 +292,7 @@ class _MessageItemState extends State<_MessageItem> {
     );
   }
 
-  void _showItemMenu(BuildContext context, Offset? position) {
+  Future<void> _showItemMenu(BuildContext context, Offset? position) async {
     final cs = Theme.of(context).colorScheme;
     final isGroup = widget.item.isGroup;
 
@@ -444,6 +455,8 @@ class _MessageItemState extends State<_MessageItem> {
             ),
           ];
 
+    setState(() => _menuActive = true);
+
     if (position != null) {
       final overlay =
           Overlay.of(context).context.findRenderObject() as RenderBox?;
@@ -454,11 +467,12 @@ class _MessageItemState extends State<_MessageItem> {
         size.width - position.dx,
         size.height - position.dy,
       );
-      showMenu(context: context, position: rect, items: desktopItems);
+      await showMenu(context: context, position: rect, items: desktopItems);
+      if (mounted) setState(() => _menuActive = false);
       return;
     }
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx) {
@@ -478,6 +492,7 @@ class _MessageItemState extends State<_MessageItem> {
             child: Column(mainAxisSize: MainAxisSize.min, children: tiles));
       },
     );
+    if (mounted) setState(() => _menuActive = false);
   }
 }
 
