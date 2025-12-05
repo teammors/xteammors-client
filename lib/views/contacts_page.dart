@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/contacts_viewmodel.dart';
+import 'user_profile_page.dart';
+import '../viewmodels/user_profile_viewmodel.dart';
 
 class ContactsPage extends StatefulWidget {
   final ContactsViewModel viewModel;
-  const ContactsPage({super.key, this.viewModel = const ContactsViewModel()});
+  final void Function(Contact)? onOpenProfile;
+  const ContactsPage({
+    super.key,
+    this.viewModel = const ContactsViewModel(),
+    this.onOpenProfile,
+  });
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -106,6 +113,31 @@ class _ContactsPageState extends State<ContactsPage> {
                     title: Text(ct.name,
                         style: TextStyle(fontSize: 16, color: cs.onSurface)),
                     subtitle: _buildSubtitle(ct, cs),
+                    onTap: () {
+                      if (widget.onOpenProfile != null) {
+                        widget.onOpenProfile!(ct);
+                      } else {
+                        final vm = UserProfileViewModel(
+                          userId: ct.id,
+                          name: ct.name,
+                          avatarUrl: ct.avatarUrl,
+                          bio: '这个人很神秘，什么都没有留下',
+                          online: ct.online,
+                          sharedGroups: const [
+                            GroupSummary(
+                                id: 'g1', name: 'Flutter Devs', members: 128),
+                            GroupSummary(
+                                id: 'g2', name: 'Design Weekly', members: 42),
+                            GroupSummary(
+                                id: 'g3', name: 'Project X Team', members: 16),
+                          ],
+                        );
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => UserProfilePage(vm: vm)),
+                        );
+                      }
+                    },
                   ),
                 ),
               );

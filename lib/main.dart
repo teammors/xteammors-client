@@ -15,10 +15,12 @@ import 'views/chat_page.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
 import 'viewmodels/theme_viewmodel.dart';
+import 'views/user_profile_page.dart';
+import 'viewmodels/user_profile_viewmodel.dart';
+import 'viewmodels/contacts_viewmodel.dart';
 import 'data/app_database.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
   initCamera();
   runApp(const XteammorsApp());
@@ -161,7 +163,29 @@ class _MainShellState extends State<MainShell> {
               : null,
         );
       case 1:
-        return const ContactsPage();
+        return ContactsPage(
+          onOpenProfile: _isDesktop
+              ? (contact) => setState(() {
+                    _rightPane = UserProfilePage(
+                      vm: UserProfileViewModel(
+                        userId: contact.id,
+                        name: contact.name,
+                        avatarUrl: contact.avatarUrl,
+                        bio: '这个人很神秘，什么都没有留下',
+                        online: contact.online,
+                        sharedGroups: const [
+                          GroupSummary(
+                              id: 'g1', name: 'Flutter Devs', members: 128),
+                          GroupSummary(
+                              id: 'g2', name: 'Design Weekly', members: 42),
+                          GroupSummary(
+                              id: 'g3', name: 'Project X Team', members: 16),
+                        ],
+                      ),
+                    );
+                  })
+              : null,
+        );
       case 2:
         return const AIPage();
       case 3:
