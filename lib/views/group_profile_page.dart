@@ -176,7 +176,7 @@ class GroupProfilePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelTitle('Members（${vm.members.length}成员）', cs),
+        _panelTitle('Members（${vm.members.length}）', cs),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -194,29 +194,33 @@ class GroupProfilePage extends StatelessWidget {
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
             itemBuilder: (c, i) {
               final m = vm.members[i];
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                leading: _memberAvatar(m.avatarUrl),
-                title: Text(m.name,
-                    style: TextStyle(color: cs.onSurface, fontSize: 15)),
-                subtitle: m.online
-                    ? Text('Online',
-                        style: const TextStyle(
-                            color: Color(0xFF1DB954), fontSize: 12))
-                    : Text('last seen at ${m.lastSeen ?? ''}',
-                        style: TextStyle(
-                            color: cs.onSurfaceVariant, fontSize: 12)),
-                trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-                onTap: () {
-                  if (onOpenMember != null) {
-                    onOpenMember!(UserProfileViewModel(
-                        userId: m.id,
-                        name: m.name,
-                        avatarUrl: m.avatarUrl,
-                        online: m.online));
-                  }
-                },
+              return SizedBox(
+                height: 65,
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  leading: _memberAvatar(m.avatarUrl),
+                  title: Text(m.name,
+                      style: TextStyle(color: cs.onSurface, fontSize: 15)),
+                  subtitle: m.online
+                      ? Text('Online',
+                          style: const TextStyle(
+                              color: Color(0xFF1DB954), fontSize: 12))
+                      : Text('last seen at ${m.lastSeen ?? ''}',
+                          style: TextStyle(
+                              color: cs.onSurfaceVariant, fontSize: 12)),
+                  trailing:
+                      Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+                  onTap: () {
+                    if (onOpenMember != null) {
+                      onOpenMember!(UserProfileViewModel(
+                          userId: m.id,
+                          name: m.name,
+                          avatarUrl: m.avatarUrl,
+                          online: m.online));
+                    }
+                  },
+                ),
               );
             },
           ),
