@@ -227,9 +227,9 @@ class GroupProfilePage extends StatelessWidget {
 
   Widget _memberAvatar(String? url) {
     if (url != null && url.isNotEmpty) {
-      return const CircleAvatar(radius: 18);
+      return const CircleAvatar(radius: 24);
     }
-    return const CircleAvatar(radius: 18, child: Text('?'));
+    return const CircleAvatar(radius: 24, child: Text('?'));
   }
 }
 

@@ -61,14 +61,15 @@ class _ChatPageState extends State<ChatPage> {
 
   void _openGroupProfile() {
     if (widget.viewModel.chatType != ChatType.group) return;
+    const sample = GroupProfileViewModel.sample();
     final gvm = GroupProfileViewModel(
       groupId: 'unknown',
       name: widget.viewModel.partnerName,
-      avatarUrl: null,
-      intro: null,
-      isOwner: false,
-      blocked: false,
-      members: const [],
+      avatarUrl: sample.avatarUrl,
+      intro: sample.intro,
+      isOwner: sample.isOwner,
+      blocked: sample.blocked,
+      members: sample.members,
     );
     if (widget.onOpenGroup != null) {
       widget.onOpenGroup!(gvm);
