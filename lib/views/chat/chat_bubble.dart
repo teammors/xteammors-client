@@ -69,7 +69,7 @@ class ChatBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           color: isSelected
               ? (isDark
                   ? Colors.white.withValues(alpha: 0.08)
@@ -109,10 +109,24 @@ class ChatBubble extends StatelessWidget {
                           : (isEmoji
                               ? const EdgeInsets.all(5)
                               : const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8)),
+                                  horizontal: 10, vertical: 5)),
                       decoration: BoxDecoration(
                           color: bubbleColor,
-                          borderRadius: BorderRadius.circular(5)),
+                          borderRadius: isMe ?
+                          BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.zero, // 右下角保持直角
+                          )
+                              :
+                          BorderRadius.only(
+                            topLeft: Radius.zero,
+                            topRight: Radius.circular(8),
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8)
+                          )
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -123,7 +137,7 @@ class ChatBubble extends StatelessWidget {
                                 thumbUrl: message.replyThumbUrl,
                                 isDark: isDark,
                                 isMe: isMe),
-                          _bubbleContent(message, textColor, context,
+                          _bubbleContent(isMe,message, textColor, context,
                               isVoicePlaying: isVoicePlaying,
                               onVoiceTap: onVoiceTap,
                               onVideoTap: onVideoTap,
@@ -146,7 +160,7 @@ class ChatBubble extends StatelessWidget {
                           if (message.time != null)
                             Text(message.time!,
                                 style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     color: isDark
                                         ? Colors.grey[500]
                                         : Colors.grey[600])),
@@ -154,7 +168,7 @@ class ChatBubble extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text('edited',
                                 style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     color: isDark
                                         ? Colors.grey[500]
                                         : Colors.grey[600])),
@@ -177,7 +191,7 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _bubbleContent(ChatMessage m, Color textColor, BuildContext context,
+  Widget _bubbleContent(bool isMe,ChatMessage m, Color textColor, BuildContext context,
       {bool isVoicePlaying = false,
       VoidCallback? onVoiceTap,
       VoidCallback? onVideoTap,
@@ -186,7 +200,7 @@ class ChatBubble extends StatelessWidget {
     switch (m.type) {
       case MessageType.text:
         return Text(m.text ?? '',
-            style: TextStyle(fontSize: 16, height: 1.4, color: textColor));
+            style: TextStyle(fontSize: 14, height: 1.4, color: textColor));
       case MessageType.emoji:
         return Text(m.emoji ?? '', style: const TextStyle(fontSize: 60));
       case MessageType.image:
@@ -207,7 +221,22 @@ class ChatBubble extends StatelessWidget {
             }
           }
           final img = ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+          borderRadius: isMe ?
+          BorderRadius.only(
+            topLeft: Radius.circular(8),
+            topRight: Radius.circular(8),
+            bottomLeft: Radius.circular(8),
+            bottomRight: Radius.zero, // 右下角保持直角
+            )
+                :
+            BorderRadius.only(
+            topLeft: Radius.zero,
+            topRight: Radius.circular(8),
+            bottomLeft: Radius.circular(8),
+            bottomRight: Radius.circular(8)
+            ),
+
+
             child: SizedBox(
               width: rw,
               height: rh,
@@ -273,7 +302,23 @@ class ChatBubble extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+
+                borderRadius: isMe ?
+                BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.zero, // 右下角保持直角
+                )
+                    :
+                BorderRadius.only(
+                    topLeft: Radius.zero,
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8)
+                ),
+
+
                 child: SizedBox(
                   width: rw,
                   height: rh,

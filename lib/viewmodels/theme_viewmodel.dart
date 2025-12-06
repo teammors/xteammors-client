@@ -7,7 +7,7 @@ enum AppTheme { dark, light }
 class ThemeViewModel {
   const ThemeViewModel();
 
-  static const Color primary = Color(0xFF23619E);
+  static const Color primary = Color(0xFF4E7DA6);
   static const Color secondary = Color(0xFFC4CCD8);
   static const String cacheKey = 'app_theme_mode';
 
