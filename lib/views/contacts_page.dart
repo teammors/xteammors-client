@@ -102,7 +102,7 @@ class _ContactsPageState extends State<ContactsPage> {
             itemCount: list.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
-                indent: 82,
+                indent: 78,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
             itemBuilder: (c, i) {
               final ct = list[i];
@@ -148,7 +148,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       children: [
                         // 头像
                         Padding(
-                          padding: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.only(right: 15),
                           child: _buildAvatar(ct),
                         ),
                         // 姓名和状态
@@ -166,7 +166,9 @@ class _ContactsPageState extends State<ContactsPage> {
                                   color: cs.onSurface,
                                 ),
                               ),
-                              SizedBox(height: 3,),
+                              SizedBox(
+                                height: 3,
+                              ),
                               _buildSubtitle(ct, cs),
                             ],
                           ),
@@ -185,11 +187,25 @@ class _ContactsPageState extends State<ContactsPage> {
 
   Widget _buildAvatar(Contact c) {
     if (c.avatarUrl != null && c.avatarUrl!.isNotEmpty) {
-      return CircleAvatar(
-          backgroundImage: NetworkImage(c.avatarUrl!), radius: 28);
+      return ClipOval(
+        child: Image.network(
+          c.avatarUrl!,
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return CircleAvatar(
+              radius: 24,
+              child: Text(c.name.isNotEmpty ? c.name[0] : '?'),
+            );
+          },
+        ),
+      );
     }
     return CircleAvatar(
-        radius: 28, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
+      radius: 24,
+      child: Text(c.name.isNotEmpty ? c.name[0] : '?'),
+    );
   }
 
   Widget _buildSubtitle(Contact c, ColorScheme cs) {
@@ -200,7 +216,8 @@ class _ContactsPageState extends State<ContactsPage> {
     final ls = c.lastSeen;
     if (ls == null) {
       return Text('last seen unknown',
-          style: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
+          style: TextStyle(
+              color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
     }
     final now = DateTime.now();
     String text;
@@ -213,6 +230,7 @@ class _ContactsPageState extends State<ContactsPage> {
           'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
     }
     return Text(text,
-        style: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
+        style: TextStyle(
+            color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
   }
 }
