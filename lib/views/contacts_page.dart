@@ -34,8 +34,8 @@ class _ContactsPageState extends State<ContactsPage> {
     final cs = Theme.of(context).colorScheme;
     final list = widget.viewModel.contacts
         .where((c) =>
-    _query.isEmpty ||
-        c.name.toLowerCase().contains(_query.toLowerCase()))
+            _query.isEmpty ||
+            c.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
     return Column(
@@ -65,7 +65,9 @@ class _ContactsPageState extends State<ContactsPage> {
             ),
           ),
         ),
-        SizedBox(height: 10,),
+        SizedBox(
+          height: 10,
+        ),
         Container(
           height: 55,
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
@@ -76,29 +78,31 @@ class _ContactsPageState extends State<ContactsPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide:
-                BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
+                    BorderSide(color: Colors.grey.withValues(alpha: 0.6)),
               ),
               isDense: true,
             ),
           ),
         ),
-        SizedBox(height: 10,),
+        SizedBox(
+          height: 10,
+        ),
         Expanded(
           child: ListView.separated(
             itemCount: list.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
-                indent: 55,
+                indent: 82,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
             itemBuilder: (c, i) {
               final ct = list[i];
@@ -115,7 +119,8 @@ class _ContactsPageState extends State<ContactsPage> {
                         userId: ct.id,
                         name: ct.name,
                         avatarUrl: ct.avatarUrl,
-                        bio: 'This person is very mysterious; he left nothing behind.',
+                        bio:
+                            'This person is very mysterious; he left nothing behind.',
                         online: ct.online,
                         sharedGroups: const [
                           GroupSummary(
@@ -133,11 +138,11 @@ class _ContactsPageState extends State<ContactsPage> {
                     }
                   },
                   child: Container(
-                    height: 55,
+                    height: 65,
                     color: hovered
                         ? cs.primary.withValues(alpha: 0.06)
                         : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
                       children: [
@@ -149,16 +154,19 @@ class _ContactsPageState extends State<ContactsPage> {
                         // 姓名和状态
                         Expanded(
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center, // 垂直居中
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 ct.name,
                                 style: TextStyle(
                                   fontSize: 16,
+                                  height: 1.0,
                                   color: cs.onSurface,
                                 ),
                               ),
+                              SizedBox(height: 3,),
                               _buildSubtitle(ct, cs),
                             ],
                           ),
@@ -178,21 +186,21 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget _buildAvatar(Contact c) {
     if (c.avatarUrl != null && c.avatarUrl!.isNotEmpty) {
       return CircleAvatar(
-          backgroundImage: NetworkImage(c.avatarUrl!), radius: 16);
+          backgroundImage: NetworkImage(c.avatarUrl!), radius: 28);
     }
     return CircleAvatar(
-        radius: 16, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
+        radius: 28, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
   }
 
   Widget _buildSubtitle(Contact c, ColorScheme cs) {
     if (c.online) {
       return Text('Online',
-          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 11));
+          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 14));
     }
     final ls = c.lastSeen;
     if (ls == null) {
       return Text('last seen unknown',
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11));
+          style: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
     }
     final now = DateTime.now();
     String text;
@@ -201,8 +209,10 @@ class _ContactsPageState extends State<ContactsPage> {
       final mm = ls.minute.toString().padLeft(2, '0');
       text = 'last seen $hh:$mm';
     } else {
-      text = 'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
+      text =
+          'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
     }
-    return Text(text, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11));
+    return Text(text,
+        style: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
   }
 }

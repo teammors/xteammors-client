@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:ui' show Color;
 
 enum ReadMark { singleGrey, doubleGreen }
+
 enum RetentionPolicy { hour1, week2, month3 }
 
 @immutable
@@ -16,6 +17,7 @@ class MessageSummary {
   final Color? retentionColor;
   final bool isGroup;
   final int unreadCount;
+  final String? avatarUrl;
   const MessageSummary({
     required this.name,
     required this.message,
@@ -27,6 +29,7 @@ class MessageSummary {
     this.retentionColor,
     this.isGroup = false,
     this.unreadCount = 0,
+    this.avatarUrl,
   });
 }
 
@@ -46,6 +49,7 @@ class MessagesViewModel {
         retentionColor: const Color(0xFFC95332),
         isGroup: false,
         unreadCount: 2,
+        avatarUrl: 'https://i.pravatar.cc/150?img=3',
       ),
       MessageSummary(
         name: 'Bob',
@@ -58,6 +62,7 @@ class MessagesViewModel {
         retentionColor: const Color(0xFFC97132),
         isGroup: false,
         unreadCount: 5,
+        avatarUrl: 'https://i.pravatar.cc/150?img=7',
       ),
       MessageSummary(
         name: 'Charlie',
@@ -70,6 +75,7 @@ class MessagesViewModel {
         retentionColor: const Color(0xFFF2D863),
         isGroup: false,
         unreadCount: 0,
+        avatarUrl: 'https://i.pravatar.cc/150?img=12',
       ),
       MessageSummary(
         name: 'Design Team',
@@ -82,6 +88,7 @@ class MessagesViewModel {
         retentionColor: const Color(0xFFC97132),
         isGroup: true,
         unreadCount: 12,
+        avatarUrl: 'https://i.pravatar.cc/150?img=24',
       ),
     ],
   });

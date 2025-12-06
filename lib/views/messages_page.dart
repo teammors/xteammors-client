@@ -49,14 +49,18 @@ class MessagesPage extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 10,),
+        SizedBox(
+          height: 10,
+        ),
         Container(
           height: 55,
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search messages',
-              prefixIcon: const Icon(Icons.search,),
+              prefixIcon: const Icon(
+                Icons.search,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide:
@@ -76,14 +80,16 @@ class MessagesPage extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 10,),
+        SizedBox(
+          height: 10,
+        ),
         Expanded(
           child: ListView.separated(
             itemCount: viewModel.items.length,
             separatorBuilder: (_, __) => Divider(
               height: 0,
               thickness: 0.5,
-              indent: 62,
+              indent: 72,
               //endIndent: 12,
               color: cs.outlineVariant.withValues(alpha: 0.2),
             ),
@@ -106,9 +112,9 @@ class _ReadMarkIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (mark) {
       case ReadMark.singleGrey:
-        return const Icon(Icons.done, color: Colors.grey, size: 14);
+        return const Icon(Icons.done, color: Colors.grey, size: 16);
       case ReadMark.doubleGreen:
-        return const Icon(Icons.done_all, color: Colors.green, size: 14);
+        return const Icon(Icons.done_all, color: Colors.green, size: 16);
     }
   }
 }
@@ -133,6 +139,7 @@ class _MessageItemState extends State<_MessageItem> {
     final item = widget.item;
     final bool isDesktop =
         kIsWeb || Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
@@ -144,8 +151,7 @@ class _MessageItemState extends State<_MessageItem> {
             : (_hover
                 ? cs.surfaceContainerHighest.withValues(alpha: 0.12)
                 : Colors.transparent),
-        height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 70,
         child: GestureDetector(
           onLongPress: isDesktop ? null : () => _showItemMenu(context, null),
           onSecondaryTapDown: isDesktop
@@ -200,103 +206,135 @@ class _MessageItemState extends State<_MessageItem> {
                 );
               }
             },
-            child: Row(
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const CircleAvatar(radius: 20),
-                    if (item.isOnline)
-                      Positioned(
-                        right: -2,
-                        bottom: -2,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: cs.surface,
-                              width: 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      if (widget.item.avatarUrl != null)
+                        ClipOval(
+                          child: Image.network(
+                            widget.item.avatarUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return CircleAvatar(
+                                radius: 25,
+                                child: Icon(
+                                  widget.item.isGroup
+                                      ? Icons.groups_2_outlined
+                                      : Icons.person_outline,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      else
+                        CircleAvatar(
+                          radius: 30,
+                          child: Icon(
+                            widget.item.isGroup
+                                ? Icons.groups_2_outlined
+                                : Icons.person_outline,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      if (item.isOnline)
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: cs.surface,
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ClipRect(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        item.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                    ],
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ClipRect(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    // if (item.retentionLabel != null &&
-                                    //     item.retentionColor != null) ...[
-                                    //   const SizedBox(width: 8),
-                                    //   _RetentionChip(
-                                    //       label: item.retentionLabel!,
-                                    //       color: item.retentionColor!),
-                                    // ],
-                                  ],
+                                      // if (item.retentionLabel != null &&
+                                      //     item.retentionColor != null) ...[
+                                      //   const SizedBox(width: 8),
+                                      //   _RetentionChip(
+                                      //       label: item.retentionLabel!,
+                                      //       color: item.retentionColor!),
+                                      // ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                item.time,
-                                style: TextStyle(
-                                    color: cs.onSurfaceVariant,
-                                    fontSize: 11,
-                                    height: 1.0),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 0),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item.message,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                const SizedBox(width: 12),
+                                Text(
+                                  item.time,
                                   style: TextStyle(
-                                      color: cs.onSurfaceVariant,
+                                      color: cs.onSurfaceVariant.withOpacity(0.5),
                                       fontSize: 12,
                                       height: 1.0),
                                 ),
-                              ),
-                              const SizedBox(width: 5),
-                              if (item.unreadCount > 0) ...[
-                                _UnreadBadge(count: item.unreadCount),
-                                const SizedBox(width: 5),
                               ],
-                              _ReadMarkIcon(mark: item.mark),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item.message,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: cs.onSurfaceVariant.withOpacity(0.6),
+                                        fontSize: 14,
+                                        height: 1.0),
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                if (item.unreadCount > 0) ...[
+                                  _UnreadBadge(count: item.unreadCount),
+                                  const SizedBox(width: 5),
+                                ],
+                                _ReadMarkIcon(mark: item.mark),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -537,13 +575,13 @@ class _UnreadBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double dHorizontal = 6;
-    
+
     String sCount = "$count";
-    if(count>=100){
+    if (count >= 100) {
       sCount = "99+";
     }
 
-    if(count > 10){
+    if (count > 10) {
       dHorizontal = 4;
     }
 
@@ -556,7 +594,9 @@ class _UnreadBadge extends StatelessWidget {
       child: Text(
         sCount,
         style: const TextStyle(
-            color: Colors.white, fontSize: 11,),
+          color: Colors.white,
+          fontSize: 11,
+        ),
       ),
     );
   }
