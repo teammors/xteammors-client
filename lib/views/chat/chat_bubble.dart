@@ -49,7 +49,7 @@ class ChatBubble extends StatelessWidget {
 
     if (isMe) {
       bubbleColor =
-          (isMedia || isEmoji) ? Colors.transparent : const Color(0xFF0088CC);
+          (isMedia || isEmoji) ? Colors.transparent : const Color(0xFF3E90C7);
       textColor = (isMedia || isEmoji) ? Colors.white : Colors.white;
     } else {
       bubbleColor = (isMedia || isEmoji)
@@ -66,7 +66,12 @@ class ChatBubble extends StatelessWidget {
       onSecondaryTapDown: (details) =>
           onShowMenu(context, details.globalPosition),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
+        margin: EdgeInsets.only(
+          top: 4,
+          bottom: 4,
+          left: isMe ? 0 : 8,
+          right: isMe ? 8 : 0,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
@@ -112,21 +117,18 @@ class ChatBubble extends StatelessWidget {
                                   horizontal: 10, vertical: 5)),
                       decoration: BoxDecoration(
                           color: bubbleColor,
-                          borderRadius: isMe ?
-                          BorderRadius.only(
-                            topLeft: Radius.circular(8),
-                            topRight: Radius.circular(8),
-                            bottomLeft: Radius.circular(8),
-                            bottomRight: Radius.zero, // 右下角保持直角
-                          )
-                              :
-                          BorderRadius.only(
-                            topLeft: Radius.zero,
-                            topRight: Radius.circular(8),
-                            bottomLeft: Radius.circular(8),
-                            bottomRight: Radius.circular(8)
-                          )
-                      ),
+                          borderRadius: isMe
+                              ? BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                  topRight: Radius.circular(8),
+                                  bottomLeft: Radius.circular(8),
+                                  bottomRight: Radius.zero, // 右下角保持直角
+                                )
+                              : BorderRadius.only(
+                                  topLeft: Radius.zero,
+                                  topRight: Radius.circular(8),
+                                  bottomLeft: Radius.circular(8),
+                                  bottomRight: Radius.circular(8))),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -137,7 +139,7 @@ class ChatBubble extends StatelessWidget {
                                 thumbUrl: message.replyThumbUrl,
                                 isDark: isDark,
                                 isMe: isMe),
-                          _bubbleContent(isMe,message, textColor, context,
+                          _bubbleContent(isMe, message, textColor, context,
                               isVoicePlaying: isVoicePlaying,
                               onVoiceTap: onVoiceTap,
                               onVideoTap: onVideoTap,
@@ -191,7 +193,8 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _bubbleContent(bool isMe,ChatMessage m, Color textColor, BuildContext context,
+  Widget _bubbleContent(
+      bool isMe, ChatMessage m, Color textColor, BuildContext context,
       {bool isVoicePlaying = false,
       VoidCallback? onVoiceTap,
       VoidCallback? onVideoTap,
@@ -221,22 +224,18 @@ class ChatBubble extends StatelessWidget {
             }
           }
           final img = ClipRRect(
-          borderRadius: isMe ?
-          BorderRadius.only(
-            topLeft: Radius.circular(8),
-            topRight: Radius.circular(8),
-            bottomLeft: Radius.circular(8),
-            bottomRight: Radius.zero, // 右下角保持直角
-            )
-                :
-            BorderRadius.only(
-            topLeft: Radius.zero,
-            topRight: Radius.circular(8),
-            bottomLeft: Radius.circular(8),
-            bottomRight: Radius.circular(8)
-            ),
-
-
+            borderRadius: isMe
+                ? BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.zero, // 右下角保持直角
+                  )
+                : BorderRadius.only(
+                    topLeft: Radius.zero,
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8)),
             child: SizedBox(
               width: rw,
               height: rh,
@@ -302,23 +301,18 @@ class ChatBubble extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               ClipRRect(
-
-                borderRadius: isMe ?
-                BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                  bottomLeft: Radius.circular(8),
-                  bottomRight: Radius.zero, // 右下角保持直角
-                )
-                    :
-                BorderRadius.only(
-                    topLeft: Radius.zero,
-                    topRight: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8)
-                ),
-
-
+                borderRadius: isMe
+                    ? BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.zero, // 右下角保持直角
+                      )
+                    : BorderRadius.only(
+                        topLeft: Radius.zero,
+                        topRight: Radius.circular(8),
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8)),
                 child: SizedBox(
                   width: rw,
                   height: rh,
