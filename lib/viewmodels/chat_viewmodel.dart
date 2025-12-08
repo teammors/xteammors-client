@@ -89,7 +89,7 @@ class ChatMessage {
 
 enum ChatType {
   private, // 私聊
-  group,   // 群聊
+  group, // 群聊
 }
 
 class ChatViewModel {
@@ -111,15 +111,60 @@ class ChatViewModel {
       lastSeen: 'last seen yesterday at 23:10',
       chatType: ChatType.private,
       messages: [
-        ChatMessage(type: MessageType.text, text: '嗯', isMe: false, time: '16:10'),
-        ChatMessage(type: MessageType.text, text: '目前平台运行情况怎么样？', isMe: true, time: '16:11', status: ReadMark.doubleGreen),
-        ChatMessage(type: MessageType.text, text: '还行吧 具体我也不清楚', isMe: false, time: '16:12'),
-        ChatMessage(type: MessageType.emoji, emoji: '🙂', isMe: false, time: '16:13'),
-        ChatMessage(type: MessageType.image, imageUrl: 'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg', imageWidth: 1280, imageHeight: 720, isMe: true, time: '16:14', status: ReadMark.singleGrey),
-        ChatMessage(type: MessageType.video, videoUrl: 'https://www.iiimaster.com/files/video_1760460657045.mp4', videoThumbUrl: 'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg', videoWidth: 1920, videoHeight: 1080, isMe: false, time: '16:16'),
-        ChatMessage(type: MessageType.voice, voiceDurationSec: 12, voiceUrl: 'https://www.iiimaster.com/files/audio_1761748345459.m4a', isMe: true, time: '16:18', status: ReadMark.doubleGreen),
-        ChatMessage(type: MessageType.file, fileName: 'report.pdf', fileSize: '1.2 MB', fileUrl: 'https://www.iiimaster.com/files/files_2394879123098523984.pdf', isMe: false, time: '16:20'),
-        ChatMessage(type: MessageType.text, text: '收到', isMe: true, time: '16:21', status: ReadMark.doubleGreen),
+        ChatMessage(
+            type: MessageType.text, text: '嗯', isMe: false, time: '16:10'),
+        ChatMessage(
+            type: MessageType.text,
+            text: '目前平台运行情况怎么样？',
+            isMe: true,
+            time: '16:11',
+            status: ReadMark.doubleGreen),
+        ChatMessage(
+            type: MessageType.text,
+            text: '还行吧 具体我也不清楚',
+            isMe: false,
+            time: '16:12'),
+        ChatMessage(
+            type: MessageType.emoji, emoji: '🙂', isMe: false, time: '16:13'),
+        ChatMessage(
+            type: MessageType.image,
+            imageUrl:
+                'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg',
+            imageWidth: 1280,
+            imageHeight: 720,
+            isMe: true,
+            time: '16:14',
+            status: ReadMark.singleGrey),
+        ChatMessage(
+            type: MessageType.video,
+            videoUrl: 'https://www.iiimaster.com/files/video_1760460657045.mp4',
+            videoThumbUrl:
+                'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg',
+            videoWidth: 1920,
+            videoHeight: 1080,
+            isMe: false,
+            time: '16:16'),
+        ChatMessage(
+            type: MessageType.voice,
+            voiceDurationSec: 12,
+            voiceUrl: 'https://www.iiimaster.com/files/audio_1761748345459.m4a',
+            isMe: true,
+            time: '16:18',
+            status: ReadMark.doubleGreen),
+        ChatMessage(
+            type: MessageType.file,
+            fileName: 'report.pdf',
+            fileSize: '1.2 MB',
+            fileUrl:
+                'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
+            isMe: false,
+            time: '16:20'),
+        ChatMessage(
+            type: MessageType.text,
+            text: '收到',
+            isMe: true,
+            time: '16:21',
+            status: ReadMark.doubleGreen),
         ChatMessage(
           type: MessageType.text,
           text: '这张图片不错',
@@ -128,7 +173,8 @@ class ChatViewModel {
           status: ReadMark.doubleGreen,
           replyType: MessageType.image,
           replyPreview: '图片',
-          replyThumbUrl: 'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg',
+          replyThumbUrl:
+              'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg',
           isEdited: true,
         ),
         ChatMessage(
@@ -161,7 +207,8 @@ class ChatViewModel {
           type: MessageType.file,
           fileName: 'notes.txt',
           fileSize: '2 KB',
-          fileUrl: 'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
+          fileUrl:
+              'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
           isMe: true,
           time: '16:26',
           status: ReadMark.doubleGreen,
@@ -178,8 +225,14 @@ class ChatViewModel {
       lastSeen: 'last seen recently',
       chatType: ChatType.private,
       messages: [
-        ChatMessage(type: MessageType.text, text: '你好', isMe: false, time: '10:00'),
-        ChatMessage(type: MessageType.text, text: 'Hi!', isMe: true, time: '10:01', status: ReadMark.singleGrey),
+        ChatMessage(
+            type: MessageType.text, text: '你好', isMe: false, time: '10:00'),
+        ChatMessage(
+            type: MessageType.text,
+            text: 'Hi!',
+            isMe: true,
+            time: '10:01',
+            status: ReadMark.singleGrey),
       ],
     );
   }
@@ -191,14 +244,65 @@ class ChatViewModel {
       lastSeen: '在线 5人',
       chatType: ChatType.group,
       messages: [
-        ChatMessage(type: MessageType.text, text: '大家早上好！', isMe: false, time: '09:00', senderName: '张三'),
-        ChatMessage(type: MessageType.emoji, emoji: '😀', isMe: true, time: '09:01', status: ReadMark.doubleGreen),
-        ChatMessage(type: MessageType.image, imageUrl: 'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg', imageWidth: 800, imageHeight: 1200, isMe: false, time: '09:05', senderName: '李四'),
-        ChatMessage(type: MessageType.video, videoUrl: 'https://www.iiimaster.com/files/video_1760460657045.mp4', videoThumbUrl: 'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg', videoWidth: 1280, videoHeight: 720, isMe: true, time: '09:10', status: ReadMark.doubleGreen),
-        ChatMessage(type: MessageType.text, text: '太好了，期待！', isMe: false, time: '09:11', senderName: '王五'),
-        ChatMessage(type: MessageType.voice, voiceDurationSec: 8, voiceUrl: 'https://www.iiimaster.com/files/audio_1761748345459.m4a', isMe: false, time: '09:12', senderName: '赵六'),
-        ChatMessage(type: MessageType.file, fileName: 'link.txt', fileSize: '4 KB', fileUrl: 'https://www.iiimaster.com/files/files_2394879123098523984.pdf', isMe: true, time: '09:15', status: ReadMark.singleGrey),
-        ChatMessage(type: MessageType.text, text: '收到！', isMe: false, time: '09:16', senderName: '张三'),
+        ChatMessage(
+            type: MessageType.text,
+            text: '大家早上好！',
+            isMe: false,
+            time: '09:00',
+            senderName: '张三'),
+        ChatMessage(
+            type: MessageType.emoji,
+            emoji: '😀',
+            isMe: true,
+            time: '09:01',
+            status: ReadMark.doubleGreen),
+        ChatMessage(
+            type: MessageType.image,
+            imageUrl:
+                'https://www.iiimaster.com/files/4cbdb3035714ab67db6c23421634e3cd.jpg',
+            imageWidth: 800,
+            imageHeight: 1200,
+            isMe: false,
+            time: '09:05',
+            senderName: '李四'),
+        ChatMessage(
+            type: MessageType.video,
+            videoUrl: 'https://www.iiimaster.com/files/video_1760460657045.mp4',
+            videoThumbUrl:
+                'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg',
+            videoWidth: 1280,
+            videoHeight: 720,
+            isMe: true,
+            time: '09:10',
+            status: ReadMark.doubleGreen),
+        ChatMessage(
+            type: MessageType.text,
+            text: '太好了，期待！',
+            isMe: false,
+            time: '09:11',
+            senderName: '王五'),
+        ChatMessage(
+            type: MessageType.voice,
+            voiceDurationSec: 8,
+            voiceUrl: 'https://www.iiimaster.com/files/audio_1761748345459.m4a',
+            isMe: false,
+            time: '09:12',
+            senderName: '赵六'),
+        ChatMessage(
+            type: MessageType.file,
+            fileName: 'link.txt',
+            fileSize: '4 KB',
+            fileUrl:
+                'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
+            isMe: true,
+            time: '09:15',
+            status: ReadMark.singleGrey),
+        ChatMessage(
+            type: MessageType.text,
+            text: '收到！',
+            isMe: false,
+            time: '09:16',
+            senderName: '张三'),
         ChatMessage(
           type: MessageType.text,
           text: '这个视频不错',
@@ -207,9 +311,15 @@ class ChatViewModel {
           time: '09:18',
           replyType: MessageType.video,
           replyPreview: '视频',
-          replyThumbUrl: 'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg',
+          replyThumbUrl:
+              'https://www.iiimaster.com/files/27ada7ffe0a4d57bbf66b162629fbb11.jpg',
         ),
-        ChatMessage(type: MessageType.text, text: '一定参加', isMe: false, time: '09:17', senderName: '李四'),
+        ChatMessage(
+            type: MessageType.text,
+            text: '一定参加',
+            isMe: false,
+            time: '09:17',
+            senderName: '李四'),
         ChatMessage(
           type: MessageType.text,
           text: '这条消息请参考',
@@ -242,7 +352,8 @@ class ChatViewModel {
           type: MessageType.file,
           fileName: 'agenda.pdf',
           fileSize: '850 KB',
-          fileUrl: 'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
+          fileUrl:
+              'https://www.iiimaster.com/files/files_2394879123098523984.pdf',
           isMe: false,
           senderName: '赵六',
           time: '09:22',
@@ -259,8 +370,14 @@ class ChatViewModel {
       lastSeen: onlineCount > 0 ? '在线 $onlineCount人' : 'last seen recently',
       chatType: ChatType.group,
       messages: [
-        ChatMessage(type: MessageType.text, text: '欢迎加入群聊', isMe: false, time: '09:00'),
-        ChatMessage(type: MessageType.text, text: 'Hi', isMe: true, time: '09:01', status: ReadMark.singleGrey),
+        ChatMessage(
+            type: MessageType.text, text: '欢迎加入群聊', isMe: false, time: '09:00'),
+        ChatMessage(
+            type: MessageType.text,
+            text: 'Hi',
+            isMe: true,
+            time: '09:01',
+            status: ReadMark.singleGrey),
       ],
     );
   }

@@ -9,7 +9,7 @@ import 'package:xteammors/utils/camera_delegate.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
-import 'views/ai_page.dart';
+import 'views/my_ai.dart';
 import 'views/settings_page.dart';
 import 'views/workspace_blank.dart';
 import 'views/chat_page.dart';
@@ -322,11 +322,74 @@ class _MainShellState extends State<MainShell> {
               : null,
         );
       case 2:
-        return const AIPage();
+        return const MyAIListPage();
       case 3:
         return SettingsPage(
           onOpenThemeSettings: _isDesktop
               ? () => setState(() => _rightPane = const ThemeSettingsPage())
+              : null,
+          onOpenUserProfile: _isDesktop
+              ? () => setState(() => _rightPane = const UserProfilePage())
+              : null,
+          onOpenSecurityPrivacy: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Security & Privacy',
+                    description: 'Manage permissions, encryption and safety.',
+                  ))
+              : null,
+          onOpenAccountManagement: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Account Management',
+                    description: 'Profile, login and linked devices.',
+                  ))
+              : null,
+          onOpenMyAIBot: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'My AI Bot',
+                    description: 'Configure AI assistant preferences.',
+                  ))
+              : null,
+          onOpenFollowedRobots: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'The Robots I Follow',
+                    description: 'View the robots I follow.',
+                  ))
+              : null,
+          onOpenFavorites: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Favorites',
+                    description: 'Manage favorite messages.',
+                  ))
+              : null,
+          onOpenFiles: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Files',
+                    description: 'Files for managing messages.',
+                  ))
+              : null,
+          onOpenNotifications: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Notifications',
+                    description: 'Notification preferences.',
+                  ))
+              : null,
+          onOpenLanguage: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Language',
+                    description: 'App language.',
+                  ))
+              : null,
+          onOpenHelpSupport: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'Help & Support',
+                    description: 'Get help and support.',
+                  ))
+              : null,
+          onOpenAbout: _isDesktop
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'About',
+                    description: 'Version info and acknowledgements.',
+                  ))
               : null,
         );
       default:

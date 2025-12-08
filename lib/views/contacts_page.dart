@@ -65,9 +65,7 @@ class _ContactsPageState extends State<ContactsPage> {
             ),
           ),
         ),
-        SizedBox(
-          height: 10,
-        ),
+        SizedBox(height: 10,),
         Container(
           height: 55,
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),

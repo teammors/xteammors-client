@@ -153,6 +153,9 @@ class _MessageItemState extends State<_MessageItem> {
                 : Colors.transparent),
         height: 70,
         child: GestureDetector(
+          onLongPressStart: kIsWeb
+              ? (details) => _showItemMenu(context, details.globalPosition)
+              : null,
           onLongPress: isDesktop ? null : () => _showItemMenu(context, null),
           onSecondaryTapDown: isDesktop
               ? (details) => _showItemMenu(context, details.globalPosition)
@@ -300,7 +303,8 @@ class _MessageItemState extends State<_MessageItem> {
                                 Text(
                                   item.time,
                                   style: TextStyle(
-                                      color: cs.onSurfaceVariant.withOpacity(0.5),
+                                      color:
+                                          cs.onSurfaceVariant.withOpacity(0.5),
                                       fontSize: 12,
                                       height: 1.0),
                                 ),
@@ -315,7 +319,8 @@ class _MessageItemState extends State<_MessageItem> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                        color: cs.onSurfaceVariant.withOpacity(0.6),
+                                        color: cs.onSurfaceVariant
+                                            .withOpacity(0.6),
                                         fontSize: 14,
                                         height: 1.0),
                                   ),

@@ -61,7 +61,8 @@ class ChatBubble extends StatelessWidget {
     final showAvatar = !isMe && chatType == ChatType.group;
 
     return GestureDetector(
-      onLongPress: () => onShowMenu(context, null),
+      onLongPressStart: (details) =>
+          onShowMenu(context, details.globalPosition),
       onDoubleTap: () => _handleDoubleTap(context),
       onSecondaryTapDown: (details) =>
           onShowMenu(context, details.globalPosition),
