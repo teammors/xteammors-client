@@ -42,7 +42,7 @@ class _AiDetailPageState extends State<AiDetailPage> {
         children: [
           Padding(
             padding:
-                const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
+                const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(5),
               child: SizedBox(
