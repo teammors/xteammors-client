@@ -78,9 +78,8 @@ class _AiDetailPageState extends State<AiDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.vm.name,
+                      SelectableText(widget.vm.name,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                               color: cs.onSurface,
                               fontSize: 20,
@@ -272,7 +271,7 @@ class _AiDetailPageState extends State<AiDetailPage> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(widget.vm.intro,
+            child: SelectableText(widget.vm.intro,
                 style: TextStyle(
                     color: cs.onSurfaceVariant, fontSize: 14, height: 1.5)),
           ),
@@ -288,7 +287,7 @@ class _AiDetailPageState extends State<AiDetailPage> {
                         fontSize: 16,
                         fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                Text(widget.vm.scenarios,
+                SelectableText(widget.vm.scenarios,
                     style: TextStyle(
                         color: cs.onSurfaceVariant, fontSize: 14, height: 1.6)),
               ],
