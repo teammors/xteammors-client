@@ -7,6 +7,8 @@ import '../viewmodels/ai_detail_viewmodel.dart';
 import '../views/chat_page.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../utils/toast_utils.dart';
+import 'chat/image_viewer_dialog.dart';
+import 'chat/video_player_dialog.dart';
 
 class AiDetailPage extends StatefulWidget {
   final AiDetailViewModel vm;
@@ -305,16 +307,53 @@ class _AiDetailPageState extends State<AiDetailPage> {
                 final m = widget.vm.media[i];
                 final w =
                     _isDesktop ? 300.0 : MediaQuery.of(context).size.width;
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: w,
-                    height: 250,
-                    child: Image.network(
-                        m.type == 'image' ? m.url : (m.thumbUrl ?? m.url),
+                final isImage = m.type == 'image';
+                return InkWell(
+                  onTap: () {
+                    if (isImage) {
+                      final urls = widget.vm.media
+                          .where((mm) => mm.type == 'image')
+                          .map((mm) => mm.url)
+                          .toList();
+                      final startIndex = urls.indexOf(m.url);
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        barrierColor: Colors.black.withValues(alpha: 0.7),
+                        builder: (_) => ImageViewerDialog(
+                          urls: urls,
+                          initialIndex: startIndex >= 0 ? startIndex : 0,
+                        ),
+                      );
+                    } else {
+                      final urls = widget.vm.media
+                          .where((mm) => mm.type == 'video')
+                          .map((mm) => mm.url)
+                          .toList();
+                      final startIndex = urls.indexOf(m.url);
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        barrierColor: Colors.black.withValues(alpha: 0.7),
+                        builder: (_) => VideoPlayerDialog(
+                          urls: urls,
+                          initialIndex: startIndex >= 0 ? startIndex : 0,
+                        ),
+                      );
+                    }
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: w,
+                      height: 250,
+                      child: Image.network(
+                        isImage ? m.url : (m.thumbUrl ?? m.url),
                         fit: BoxFit.cover,
                         errorBuilder: (c, e, s) =>
-                            const ColoredBox(color: Colors.black12)),
+                            const ColoredBox(color: Colors.black12),
+                      ),
+                    ),
                   ),
                 );
               },
