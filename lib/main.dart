@@ -10,6 +10,7 @@ import 'package:xteammors/utils/camera_delegate.dart';
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
 import 'views/my_ai.dart';
+import 'views/ai_detail.dart';
 import 'views/settings_page.dart';
 import 'views/workspace_blank.dart';
 import 'views/chat_page.dart';
@@ -322,7 +323,21 @@ class _MainShellState extends State<MainShell> {
               : null,
         );
       case 2:
-        return const MyAIListPage();
+        return MyAIListPage(
+          onOpenDetail: _isDesktop
+              ? (detailVm) => setState(
+                    () => _rightPane = AiDetailPage(
+                      vm: detailVm,
+                      onOpenChatWithRobot: (chatVm) => setState(
+                        () => _rightPane = ChatPage(viewModel: chatVm),
+                      ),
+                      onOpenChatWithOwner: (chatVm) => setState(
+                        () => _rightPane = ChatPage(viewModel: chatVm),
+                      ),
+                    ),
+                  )
+              : null,
+        );
       case 3:
         return SettingsPage(
           onOpenThemeSettings: _isDesktop
