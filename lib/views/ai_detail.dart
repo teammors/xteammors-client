@@ -103,18 +103,48 @@ class _AiDetailPageState extends State<AiDetailPage> {
                       Row(
                         children: [
                           if (widget.vm.owner.avatarUrl != null)
-                            ClipOval(
-                              child: Image.network(
-                                widget.vm.owner.avatarUrl!,
-                                width: 20,
-                                height: 20,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) =>
-                                    const CircleAvatar(radius: 10),
+                            InkWell(
+                              onTap: () {
+                                final vm = ChatViewModel.privateFromName(
+                                    widget.vm.owner.name);
+                                if (widget.onOpenChatWithOwner != null) {
+                                  widget.onOpenChatWithOwner!(vm);
+                                } else {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ChatPage(viewModel: vm),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: ClipOval(
+                                child: Image.network(
+                                  widget.vm.owner.avatarUrl!,
+                                  width: 20,
+                                  height: 20,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) =>
+                                      const CircleAvatar(radius: 10),
+                                ),
                               ),
                             )
                           else
-                            const CircleAvatar(radius: 10),
+                            InkWell(
+                              onTap: () {
+                                final vm = ChatViewModel.privateFromName(
+                                    widget.vm.owner.name);
+                                if (widget.onOpenChatWithOwner != null) {
+                                  widget.onOpenChatWithOwner!(vm);
+                                } else {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ChatPage(viewModel: vm),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const CircleAvatar(radius: 10),
+                            ),
                           const SizedBox(width: 6),
                           Text(
                             widget.vm.owner.name,
@@ -334,7 +364,6 @@ class _AiDetailPageState extends State<AiDetailPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 20),
         ],
       ),
