@@ -12,6 +12,8 @@ import 'views/contacts_page.dart';
 import 'views/my_ai.dart';
 import 'views/ai_detail.dart';
 import 'views/settings_page.dart';
+import 'views/ai_market.dart';
+import 'viewmodels/ai_market_viewmodel.dart';
 import 'views/workspace_blank.dart';
 import 'views/chat_page.dart';
 import 'viewmodels/chat_viewmodel.dart';
@@ -323,21 +325,22 @@ class _MainShellState extends State<MainShell> {
               : null,
         );
       case 2:
-        return MyAIListPage(
-          onOpenDetail: _isDesktop
-              ? (detailVm) => setState(
-                    () => _rightPane = AiDetailPage(
-                      vm: detailVm,
-                      onOpenChatWithRobot: (chatVm) => setState(
-                        () => _rightPane = ChatPage(viewModel: chatVm),
-                      ),
-                      onOpenChatWithOwner: (chatVm) => setState(
-                        () => _rightPane = ChatPage(viewModel: chatVm),
-                      ),
-                    ),
-                  )
-              : null,
-        );
+        if (_isDesktop) {
+          return MyAIListPage(
+            onOpenDetail: (detailVm) => setState(
+              () => _rightPane = AiDetailPage(
+                vm: detailVm,
+                onOpenChatWithRobot: (chatVm) => setState(
+                  () => _rightPane = ChatPage(viewModel: chatVm),
+                ),
+                onOpenChatWithOwner: (chatVm) => setState(
+                  () => _rightPane = ChatPage(viewModel: chatVm),
+                ),
+              ),
+            ),
+          );
+        }
+        return const AiMarketPage(viewModel: AiMarketViewModel());
       case 3:
         return SettingsPage(
           onOpenThemeSettings: _isDesktop
@@ -545,7 +548,28 @@ class _MainShellState extends State<MainShell> {
                                 onDestinationSelected: (index) {
                                   setState(() {
                                     _selectedIndex = index;
-                                    _rightPane = const WorkspaceBlank();
+                                    if (_isDesktop && index == 2) {
+                                      _rightPane = AiMarketPage(
+                                        viewModel: const AiMarketViewModel(),
+                                        onOpenDetail: (detailVm) => setState(
+                                          () => _rightPane = AiDetailPage(
+                                            vm: detailVm,
+                                            onOpenChatWithRobot: (chatVm) =>
+                                                setState(
+                                              () => _rightPane =
+                                                  ChatPage(viewModel: chatVm),
+                                            ),
+                                            onOpenChatWithOwner: (chatVm) =>
+                                                setState(
+                                              () => _rightPane =
+                                                  ChatPage(viewModel: chatVm),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      _rightPane = const WorkspaceBlank();
+                                    }
                                   });
                                 },
                               ),
