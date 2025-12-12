@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AppTheme { dark, light }
+enum AppTheme { dark, light, system }
 
 @immutable
 class ThemeViewModel {
@@ -35,20 +35,44 @@ class ThemeViewModel {
       case AppTheme.light:
         state?.setTheme(dark: false);
         break;
+      case AppTheme.system:
+        state?.setThemeMode(ThemeMode.system);
+        break;
     }
     saveTheme(theme);
   }
 
   static Future<void> saveTheme(AppTheme theme) async {
     final p = await SharedPreferences.getInstance();
-    await p.setString(cacheKey, theme == AppTheme.dark ? 'dark' : 'light');
+    String v;
+    switch (theme) {
+      case AppTheme.dark:
+        v = 'dark';
+        break;
+      case AppTheme.light:
+        v = 'light';
+        break;
+      case AppTheme.system:
+        v = 'system';
+        break;
+    }
+    await p.setString(cacheKey, v);
   }
 
   static Future<AppTheme?> loadTheme() async {
     final p = await SharedPreferences.getInstance();
     final v = p.getString(cacheKey);
     if (v == null) return null;
-    return v == 'dark' ? AppTheme.dark : AppTheme.light;
+    switch (v) {
+      case 'dark':
+        return AppTheme.dark;
+      case 'light':
+        return AppTheme.light;
+      case 'system':
+        return AppTheme.system;
+      default:
+        return AppTheme.light;
+    }
   }
 }
 
@@ -68,4 +92,5 @@ class AppStateScope extends InheritedWidget {
 
 abstract class ThemeSetter {
   void setTheme({required bool dark});
+  void setThemeMode(ThemeMode mode);
 }

@@ -8,11 +8,11 @@ import 'package:provider/provider.dart';
 import 'package:xteammors/utils/camera_delegate.dart';
 import 'package:xteammors/utils/message_helper.dart';
 import 'package:xteammors/utils/teammors_log.dart';
+import 'package:xteammors/views/settings/my_followed_ai.dart';
 import 'package:xteammors/websocket/im_client_helper.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
-import 'views/my_ai.dart';
 import 'views/ai_detail.dart';
 import 'viewmodels/ai_detail_viewmodel.dart';
 import 'views/settings_page.dart';
@@ -22,6 +22,9 @@ import 'views/workspace_blank.dart';
 import 'views/chat_page.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
+import 'views/settings/security_privacy_page.dart';
+import 'views/settings/account_management_page.dart';
+import 'views/settings/my_robot_management.dart';
 import 'viewmodels/theme_viewmodel.dart';
 import 'views/user_profile_page.dart';
 import 'viewmodels/user_profile_viewmodel.dart';
@@ -71,7 +74,7 @@ class XteammorsApp extends StatefulWidget {
 
 class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
   final _themeVM = const ThemeViewModel();
-  bool _dark = false;
+  ThemeMode _themeMode = ThemeMode.light;
   late final AppDatabase _db;
 
   @override
@@ -81,19 +84,27 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
     _prepareDb();
     _bootstrapTheme();
 
-
     // 初始化IM客户端
     MessageHelper.getInstance().init();
     ImClientHelper.getInstance().initImClient();
     TeammorsLogUtils.tlog("IM客户端初始化完成");
-
   }
 
   Future<void> _bootstrapTheme() async {
     final t = await ThemeViewModel.loadTheme();
     if (t != null) {
       setState(() {
-        _dark = t == AppTheme.dark;
+        switch (t) {
+          case AppTheme.dark:
+            _themeMode = ThemeMode.dark;
+            break;
+          case AppTheme.light:
+            _themeMode = ThemeMode.light;
+            break;
+          case AppTheme.system:
+            _themeMode = ThemeMode.system;
+            break;
+        }
       });
     }
   }
@@ -107,7 +118,14 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
   @override
   void setTheme({required bool dark}) {
     setState(() {
-      _dark = dark;
+      _themeMode = dark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
+  void setThemeMode(ThemeMode mode) {
+    setState(() {
+      _themeMode = mode;
     });
   }
 
@@ -150,7 +168,7 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
               ),
             ),
           ),
-          themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
+          themeMode: _themeMode,
           home: const MainShell(),
         ),
       ),
@@ -337,7 +355,7 @@ class _MainShellState extends State<MainShell> {
         );
       case 2:
         if (_isDesktop) {
-          return MyAIListPage(
+          return MyFollowedAIListPage(
             onOpenDetail: (detailVm) => setState(
               () => _rightPane = _aiDetailPane(detailVm),
             ),
@@ -353,28 +371,16 @@ class _MainShellState extends State<MainShell> {
               ? () => setState(() => _rightPane = const UserProfilePage())
               : null,
           onOpenSecurityPrivacy: _isDesktop
-              ? () => setState(() => _rightPane = const SettingsDetailPage(
-                    title: 'Security & Privacy',
-                    description: 'Manage permissions, encryption and safety.',
-                  ))
+              ? () => setState(() => _rightPane = const SecurityPrivacyPage())
               : null,
           onOpenAccountManagement: _isDesktop
-              ? () => setState(() => _rightPane = const SettingsDetailPage(
-                    title: 'Account Management',
-                    description: 'Profile, login and linked devices.',
-                  ))
+              ? () => setState(() => _rightPane = const AccountManagementPage())
               : null,
           onOpenMyAIBot: _isDesktop
-              ? () => setState(() => _rightPane = const SettingsDetailPage(
-                    title: 'My AI Bot',
-                    description: 'Configure AI assistant preferences.',
-                  ))
+              ? () => setState(() => _rightPane = MyRobotManagementPage())
               : null,
           onOpenFollowedRobots: _isDesktop
-              ? () => setState(() => _rightPane = const SettingsDetailPage(
-                    title: 'The Robots I Follow',
-                    description: 'View the robots I follow.',
-                  ))
+              ? () => setState(() => _rightPane = const MyFollowedAIListPage())
               : null,
           onOpenFavorites: _isDesktop
               ? () => setState(() => _rightPane = const SettingsDetailPage(

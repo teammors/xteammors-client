@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import '../viewmodels/my_ai_viewmodel.dart';
-import '../viewmodels/ai_detail_viewmodel.dart';
-import '../utils/toast_utils.dart';
-import 'ai_detail.dart';
 
-class MyAIListPage extends StatefulWidget {
+import '../../viewmodels/ai_detail_viewmodel.dart';
+import '../../viewmodels/my_followed_ai_viewmodel.dart';
+import '../ai_detail.dart';
+
+
+class MyFollowedAIListPage extends StatefulWidget {
   final AIViewModel viewModel;
   final void Function(AiDetailViewModel)? onOpenDetail;
-  const MyAIListPage(
+  const MyFollowedAIListPage(
       {super.key, this.viewModel = const AIViewModel(), this.onOpenDetail});
 
   @override
-  State<MyAIListPage> createState() => _MyAIListPageState();
+  State<MyFollowedAIListPage> createState() => _MyFollowedAIListPageState();
 }
 
-class _MyAIListPageState extends State<MyAIListPage> {
+class _MyFollowedAIListPageState extends State<MyFollowedAIListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
@@ -40,20 +41,18 @@ class _MyAIListPageState extends State<MyAIListPage> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My AI'),
+        title: const Text('我关注的机器人'),
         centerTitle: false,
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 10),
           Container(
             height: 55,
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search AI Bots',
+                hintText: '搜索关注的机器人',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -199,7 +198,13 @@ class _RobotItemState extends State<_RobotItem> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _CategoryChip(label: widget.robot.category),
+                        Text(
+                          widget.robot.category,
+                          style: TextStyle(
+                            color: cs.onSurfaceVariant.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -221,51 +226,6 @@ class _RobotItemState extends State<_RobotItem> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  final String label;
-  const _CategoryChip({required this.label});
-
-  Color _colorFor(String c) {
-    switch (c) {
-      case '游戏':
-        return const Color(0xFF7C4DFF);
-      case '客服':
-        return const Color(0xFF03A9F4);
-      case '营销':
-        return const Color(0xFFFF7043);
-      case '教育':
-        return const Color(0xFF4CAF50);
-      case '提效':
-        return const Color(0xFFFFC107);
-      case '陪伴':
-        return const Color(0xFFE91E63);
-      case '信息':
-        return const Color(0xFF00BCD4);
-      case '硬件':
-        return const Color(0xFF3F51B5);
-      default:
-        return const Color(0xFF999999);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _colorFor(label);
-    final bg = color.withValues(alpha: 0.15);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11),
       ),
     );
   }

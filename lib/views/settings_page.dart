@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:xteammors/views/settings/my_followed_ai.dart';
 import '../viewmodels/settings_viewmodel.dart';
 import 'settings/theme_settings_page.dart';
-import '../utils/toast_utils.dart';
+import 'settings/security_privacy_page.dart';
+import 'settings/account_management_page.dart';
+import 'settings/my_robot_management.dart';
 import 'user_profile_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -142,11 +145,7 @@ class SettingsPage extends StatelessWidget {
                       } else {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const SettingsDetailPage(
-                              title: 'Security & Privacy',
-                              description:
-                                  'Manage permissions, encryption and safety.',
-                            ),
+                            builder: (_) => const SecurityPrivacyPage(),
                           ),
                         );
                       }
@@ -170,10 +169,7 @@ class SettingsPage extends StatelessWidget {
                       } else {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const SettingsDetailPage(
-                              title: 'Account Management',
-                              description: 'Profile, login and linked devices.',
-                            ),
+                            builder: (_) => const AccountManagementPage(),
                           ),
                         );
                       }
@@ -197,11 +193,7 @@ class SettingsPage extends StatelessWidget {
                       } else {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const SettingsDetailPage(
-                              title: 'My AI Bot',
-                              description:
-                                  'Configure AI assistant preferences.',
-                            ),
+                            builder: (_) => MyRobotManagementPage(),
                           ),
                         );
                       }
@@ -225,10 +217,7 @@ class SettingsPage extends StatelessWidget {
                       } else {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const SettingsDetailPage(
-                              title: 'The Robots I Follow',
-                              description: 'View the robots I follow.',
-                            ),
+                            builder: (_) => const MyFollowedAIListPage(),
                           ),
                         );
                       }

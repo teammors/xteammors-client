@@ -34,7 +34,7 @@ class MessageHelper implements Observer {
 
   @override
   void update(String message) {
-    TeammorsLogUtils.tlog(message);
+    //TeammorsLogUtils.tlog(message);
 
   }
 
