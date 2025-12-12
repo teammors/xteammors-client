@@ -6,11 +6,15 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:xteammors/utils/camera_delegate.dart';
+import 'package:xteammors/utils/message_helper.dart';
+import 'package:xteammors/utils/teammors_log.dart';
+import 'package:xteammors/websocket/im_client_helper.dart';
 
 import 'views/messages_page.dart';
 import 'views/contacts_page.dart';
 import 'views/my_ai.dart';
 import 'views/ai_detail.dart';
+import 'viewmodels/ai_detail_viewmodel.dart';
 import 'views/settings_page.dart';
 import 'views/ai_market.dart';
 import 'viewmodels/ai_market_viewmodel.dart';
@@ -76,6 +80,13 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
     _db = AppDatabase.makeDefault();
     _prepareDb();
     _bootstrapTheme();
+
+
+    // 初始化IM客户端
+    MessageHelper.getInstance().init();
+    ImClientHelper.getInstance().initImClient();
+    TeammorsLogUtils.tlog("IM客户端初始化完成");
+
   }
 
   Future<void> _bootstrapTheme() async {
@@ -328,15 +339,7 @@ class _MainShellState extends State<MainShell> {
         if (_isDesktop) {
           return MyAIListPage(
             onOpenDetail: (detailVm) => setState(
-              () => _rightPane = AiDetailPage(
-                vm: detailVm,
-                onOpenChatWithRobot: (chatVm) => setState(
-                  () => _rightPane = ChatPage(viewModel: chatVm),
-                ),
-                onOpenChatWithOwner: (chatVm) => setState(
-                  () => _rightPane = ChatPage(viewModel: chatVm),
-                ),
-              ),
+              () => _rightPane = _aiDetailPane(detailVm),
             ),
           );
         }
@@ -420,6 +423,28 @@ class _MainShellState extends State<MainShell> {
   bool get _isDesktop {
     if (kIsWeb) return true;
     return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  }
+
+  Widget _aiMarketPane() {
+    return AiMarketPage(
+      viewModel: const AiMarketViewModel(),
+      onOpenDetail: (detailVm) => setState(
+        () => _rightPane = _aiDetailPane(detailVm),
+      ),
+    );
+  }
+
+  Widget _aiDetailPane(AiDetailViewModel vm) {
+    return AiDetailPage(
+      vm: vm,
+      onOpenChatWithRobot: (chatVm) => setState(
+        () => _rightPane = ChatPage(viewModel: chatVm),
+      ),
+      onOpenChatWithOwner: (chatVm) => setState(
+        () => _rightPane = ChatPage(viewModel: chatVm),
+      ),
+      onBack: () => setState(() => _rightPane = _aiMarketPane()),
+    );
   }
 
   // 自定义标题栏
@@ -549,24 +574,7 @@ class _MainShellState extends State<MainShell> {
                                   setState(() {
                                     _selectedIndex = index;
                                     if (_isDesktop && index == 2) {
-                                      _rightPane = AiMarketPage(
-                                        viewModel: const AiMarketViewModel(),
-                                        onOpenDetail: (detailVm) => setState(
-                                          () => _rightPane = AiDetailPage(
-                                            vm: detailVm,
-                                            onOpenChatWithRobot: (chatVm) =>
-                                                setState(
-                                              () => _rightPane =
-                                                  ChatPage(viewModel: chatVm),
-                                            ),
-                                            onOpenChatWithOwner: (chatVm) =>
-                                                setState(
-                                              () => _rightPane =
-                                                  ChatPage(viewModel: chatVm),
-                                            ),
-                                          ),
-                                        ),
-                                      );
+                                      _rightPane = _aiMarketPane();
                                     } else {
                                       _rightPane = const WorkspaceBlank();
                                     }

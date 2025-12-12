@@ -17,10 +17,42 @@ class AiMarketPage extends StatefulWidget {
   State<AiMarketPage> createState() => _AiMarketPageState();
 }
 
-class _AiMarketPageState extends State<AiMarketPage> {
+class _SlowScrollPhysics extends ClampingScrollPhysics {
+  const _SlowScrollPhysics({super.parent});
+  @override
+  _SlowScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _SlowScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    return super.applyPhysicsToUserOffset(position, offset * 0.6);
+  }
+}
+
+class _NoBarSlowScrollBehavior extends ScrollBehavior {
+  const _NoBarSlowScrollBehavior();
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const _SlowScrollPhysics();
+  }
+}
+
+class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClientMixin {
   final Set<String> _selectedCats = {};
   final Set<int> _hoveredItems = {};
   final Set<int> _hoveredBanners = {};
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  bool get wantKeepAlive => true; // 保持组件状态
 
   bool get _isDesktop {
     if (kIsWeb) return true;
@@ -28,14 +60,32 @@ class _AiMarketPageState extends State<AiMarketPage> {
   }
 
   List<MarketRobot> get _filtered {
-    if (_selectedCats.isEmpty) return widget.viewModel.robots;
-    return widget.viewModel.robots
-        .where((r) => _selectedCats.contains(r.category))
-        .toList();
+    var list = widget.viewModel.robots;
+    final baseCats = widget.viewModel.categories;
+    if (_selectedCats.isNotEmpty && !_selectedCats.contains('全部')) {
+      final Set<String> selected = {..._selectedCats};
+      final bool includeOthers = selected.remove('其他');
+      list = list.where((r) {
+        final inSelected = selected.contains(r.category);
+        final isOther = !baseCats.contains(r.category);
+        return includeOthers ? (inSelected || isOther) : inSelected;
+      }).toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list
+          .where((r) =>
+              r.name.toLowerCase().contains(q) ||
+              r.intro.toLowerCase().contains(q))
+          .toList();
+    }
+    return list;
   }
 
   Color _categoryColor(String c) {
     switch (c) {
+      case '全部':
+        return const Color(0xFF607D8B);
       case '游戏':
         return const Color(0xFF7C4DFF);
       case '客服':
@@ -52,6 +102,8 @@ class _AiMarketPageState extends State<AiMarketPage> {
         return const Color(0xFF00BCD4);
       case '硬件':
         return const Color(0xFF3F51B5);
+      case '其他':
+        return const Color(0xFF9E9E9E);
       default:
         return const Color(0xFF999999);
     }
@@ -59,6 +111,11 @@ class _AiMarketPageState extends State<AiMarketPage> {
 
   void _toggleCategory(String cat) {
     setState(() {
+      if (cat == '全部') {
+        _selectedCats.clear();
+        return;
+      }
+      _selectedCats.remove('全部');
       if (_selectedCats.contains(cat)) {
         _selectedCats.remove(cat);
       } else {
@@ -106,6 +163,9 @@ class _AiMarketPageState extends State<AiMarketPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    super.build(context); // 必须调用
+
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -114,278 +174,502 @@ class _AiMarketPageState extends State<AiMarketPage> {
         centerTitle: false,
         title: const Text('AI 市场'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(15),
-        children: [
-          SizedBox(
-            height: 200,
-            child: _isDesktop
-                ? ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: widget.viewModel.robots.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, i) {
-                      final r = widget.viewModel.robots[i];
-                      final hovered = _hoveredBanners.contains(i);
-                      final shadow = hovered
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF000000)
-                                    .withValues(alpha: 0.18),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ]
-                          : [
-                              BoxShadow(
-                                color: const Color(0xFF000000)
-                                    .withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ];
-                      final borderColor = cs.outlineVariant
-                          .withValues(alpha: hovered ? 0.28 : 0.14);
-                      return MouseRegion(
-                        onEnter: (_) => setState(() => _hoveredBanners.add(i)),
-                        onExit: (_) =>
-                            setState(() => _hoveredBanners.remove(i)),
-                        child: AnimatedScale(
-                          scale: hovered ? 1.03 : 1.0,
-                          duration: const Duration(milliseconds: 150),
-                          curve: Curves.easeOut,
-                          child: InkWell(
-                            onTap: () => _openDetail(r),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: borderColor),
-                                boxShadow: shadow,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: SizedBox(
-                                  width: 500,
-                                  height: 200,
-                                  child: Image.network(
-                                    r.bannerUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (c, e, s) =>
-                                        const ColoredBox(color: Colors.black12),
+      body: ScrollConfiguration(
+        behavior: const _NoBarSlowScrollBehavior(),
+        child: ListView(
+          padding: const EdgeInsets.all(15),
+          children: [
+            SizedBox(
+              height: 200,
+              child: _isDesktop
+                  ? ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: widget.viewModel.robots.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) {
+                        final r = widget.viewModel.robots[i];
+                        final hovered = _hoveredBanners.contains(i);
+                        final shadow = hovered
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF000000)
+                                      .withValues(alpha: 0.18),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: const Color(0xFF000000)
+                                      .withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ];
+                        final borderColor = cs.outlineVariant
+                            .withValues(alpha: hovered ? 0.28 : 0.14);
+                        return MouseRegion(
+                          onEnter: (_) =>
+                              setState(() => _hoveredBanners.add(i)),
+                          onExit: (_) =>
+                              setState(() => _hoveredBanners.remove(i)),
+                          child: AnimatedScale(
+                            scale: hovered ? 1.03 : 1.0,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOut,
+                            child: InkWell(
+                              onTap: () => _openDetail(r),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: borderColor),
+                                  boxShadow: shadow,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Stack(
+                                    children: [
+                                      SizedBox(
+                                        width: 500,
+                                        height: 200,
+                                        child: Image.network(
+                                          r.bannerUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) =>
+                                              const ColoredBox(
+                                                  color: Colors.black12),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF000000)
+                                                .withValues(alpha: 0.38),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      r.name,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w600),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: _categoryColor(
+                                                              r.category)
+                                                          .withValues(
+                                                              alpha: 0.2),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                    child: Text(
+                                                      r.category,
+                                                      style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 11),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.bar_chart,
+                                                      size: 14,
+                                                      color: Colors.white70),
+                                                  const SizedBox(width: 4),
+                                                  Text('${r.usage}',
+                                                      style: const TextStyle(
+                                                          color: Colors.white)),
+                                                  const SizedBox(width: 12),
+                                                  Icon(Icons.visibility,
+                                                      size: 14,
+                                                      color: Colors.white70),
+                                                  const SizedBox(width: 4),
+                                                  Text('${r.views}',
+                                                      style: const TextStyle(
+                                                          color: Colors.white)),
+                                                  const SizedBox(width: 12),
+                                                  Icon(Icons.favorite_outline,
+                                                      size: 14,
+                                                      color: Colors.white70),
+                                                  const SizedBox(width: 4),
+                                                  Text('${r.follows}',
+                                                      style: const TextStyle(
+                                                          color: Colors.white)),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  )
-                : PageView.builder(
-                    controller: PageController(viewportFraction: 1.0),
-                    itemCount: widget.viewModel.robots.length,
-                    itemBuilder: (_, i) {
-                      final r = widget.viewModel.robots[i];
-                      return Padding(
-                        padding: EdgeInsets.only(
-                            right: i == widget.viewModel.robots.length - 1
-                                ? 0
-                                : 12),
-                        child: InkWell(
-                          onTap: () => _openDetail(r),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              r.bannerUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) =>
-                                  const ColoredBox(color: Colors.black12),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: widget.viewModel.categories.map((cat) {
-              final selected = _selectedCats.contains(cat);
-              final base = _categoryColor(cat);
-              final color = base;
-              final bg = base.withValues(alpha: selected ? 0.24 : 0.16);
-              return InkWell(
-                onTap: () => _toggleCategory(cat),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: base.withValues(alpha: selected ? 0.9 : 0.5),
-                    ),
-                  ),
-                  child:
-                      Text(cat, style: TextStyle(color: color, fontSize: 13)),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-          LayoutBuilder(builder: (context, constraints) {
-            final double spacing = 12;
-            final int crossAxisCount = 3;
-            final double itemWidth =
-                (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
-                    crossAxisCount;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: List.generate(_filtered.length, (i) {
-                final r = _filtered[i];
-                final hovered = _hoveredItems.contains(i);
-                final borderColor =
-                    cs.outlineVariant.withValues(alpha: hovered ? 0.30 : 0.14);
-                final shadow = hovered
-                    ? [
-                        BoxShadow(
-                          color:
-                              const Color(0xFF000000).withValues(alpha: 0.22),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ]
-                    : [
-                        BoxShadow(
-                          color:
-                              const Color(0xFF000000).withValues(alpha: 0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ];
-                return SizedBox(
-                    width: itemWidth,
-                    child: MouseRegion(
-                      onEnter: (_) => setState(() => _hoveredItems.add(i)),
-                      onExit: (_) => setState(() => _hoveredItems.remove(i)),
-                      child: AnimatedScale(
-                        scale: hovered ? 1.03 : 1.0,
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                        child: InkWell(
-                          onTap: () => _openDetail(r),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeOut,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF1E1E1E)
-                                    : cs.surface,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: borderColor),
-                                boxShadow: shadow,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        );
+                      },
+                    )
+                  : PageView.builder(
+                      controller: PageController(viewportFraction: 1.0),
+                      itemCount: widget.viewModel.robots.length,
+                      itemBuilder: (_, i) {
+                        final r = widget.viewModel.robots[i];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                              right: i == widget.viewModel.robots.length - 1
+                                  ? 0
+                                  : 12),
+                          child: InkWell(
+                            onTap: () => _openDetail(r),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
                                 children: [
-                                  SizedBox(
-                                    height: itemWidth * 0.4,
-                                    width: double.infinity,
-                                    child: Image.network(
-                                      r.bannerUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (c, e, s) =>
-                                          const ColoredBox(
-                                              color: Colors.black12),
-                                    ),
+                                  Image.network(
+                                    r.bannerUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) =>
+                                        const ColoredBox(color: Colors.black12),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          r.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    _categoryColor(r.category)
-                                                        .withValues(
-                                                            alpha: 0.15),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
+                                  Positioned(
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF000000)
+                                            .withValues(alpha: 0.38),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  r.name,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
                                               ),
-                                              child: Text(
-                                                r.category,
-                                                style: TextStyle(
-                                                    color: _categoryColor(
-                                                        r.category),
-                                                    fontSize: 11),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _categoryColor(r.category)
+                                                          .withValues(
+                                                              alpha: 0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  r.category,
+                                                  style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 11),
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Icon(Icons.visibility,
-                                                size: 14,
-                                                color: cs.onSurfaceVariant),
-                                            const SizedBox(width: 4),
-                                            Text('${r.views}',
-                                                style: TextStyle(
-                                                    color: cs.onSurface,
-                                                    fontSize: 12)),
-                                            const SizedBox(width: 12),
-                                            Icon(Icons.favorite_outline,
-                                                size: 14,
-                                                color: cs.onSurfaceVariant),
-                                            const SizedBox(width: 4),
-                                            Text('${r.follows}',
-                                                style: TextStyle(
-                                                    color: cs.onSurface,
-                                                    fontSize: 12)),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          r.intro,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                              color: cs.onSurfaceVariant,
-                                              fontSize: 12,
-                                              height: 1.3),
-                                        ),
-                                      ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.bar_chart,
+                                                  size: 14,
+                                                  color: Colors.white70),
+                                              const SizedBox(width: 4),
+                                              Text('${r.usage}',
+                                                  style: const TextStyle(
+                                                      color: Colors.white)),
+                                              const SizedBox(width: 12),
+                                              Icon(Icons.visibility,
+                                                  size: 14,
+                                                  color: Colors.white70),
+                                              const SizedBox(width: 4),
+                                              Text('${r.views}',
+                                                  style: const TextStyle(
+                                                      color: Colors.white)),
+                                              const SizedBox(width: 12),
+                                              Icon(Icons.favorite_outline,
+                                                  size: 14,
+                                                  color: Colors.white70),
+                                              const SizedBox(width: 4),
+                                              Text('${r.follows}',
+                                                  style: const TextStyle(
+                                                      color: Colors.white)),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                '全部',
+                ...widget.viewModel.categories,
+                '其他',
+              ].map((cat) {
+                final selected = _selectedCats.contains(cat);
+                final base = _categoryColor(cat);
+                final color = base;
+                final bg = base.withValues(alpha: selected ? 0.24 : 0.16);
+                return InkWell(
+                  onTap: () => _toggleCategory(cat),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: base.withValues(alpha: selected ? 0.9 : 0.5),
                       ),
-                    ));
-              }),
-            );
-          }),
-        ],
+                    ),
+                    child:
+                        Text(cat, style: TextStyle(color: color, fontSize: 13)),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: '搜索机器人',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _searchQuery.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      ),
+                filled: true,
+                fillColor: cs.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.4)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.4)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide:
+                      BorderSide(color: cs.primary.withValues(alpha: 0.6)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(builder: (context, constraints) {
+              final double spacing = 12;
+              final int crossAxisCount = 3;
+              final double itemWidth =
+                  (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+                      crossAxisCount;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: List.generate(_filtered.length, (i) {
+                  final r = _filtered[i];
+                  final hovered = _hoveredItems.contains(i);
+                  final borderColor = cs.outlineVariant
+                      .withValues(alpha: hovered ? 0.30 : 0.14);
+                  final shadow = hovered
+                      ? [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF000000).withValues(alpha: 0.22),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF000000).withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ];
+                  return SizedBox(
+                      width: itemWidth,
+                      child: MouseRegion(
+                        onEnter: (_) => setState(() => _hoveredItems.add(i)),
+                        onExit: (_) => setState(() => _hoveredItems.remove(i)),
+                        child: AnimatedScale(
+                          scale: hovered ? 1.03 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOut,
+                          child: InkWell(
+                            onTap: () => _openDetail(r),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                curve: Curves.easeOut,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF1E1E1E)
+                                      : cs.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: borderColor),
+                                  boxShadow: shadow,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: itemWidth * 0.4,
+                                      width: double.infinity,
+                                      child: Image.network(
+                                        r.bannerUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) =>
+                                            const ColoredBox(
+                                                color: Colors.black12),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            r.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _categoryColor(r.category)
+                                                          .withValues(
+                                                              alpha: 0.15),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  r.category,
+                                                  style: TextStyle(
+                                                      color: _categoryColor(
+                                                          r.category),
+                                                      fontSize: 11),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Icon(Icons.visibility,
+                                                  size: 14,
+                                                  color: cs.onSurfaceVariant),
+                                              const SizedBox(width: 4),
+                                              Text('${r.views}',
+                                                  style: TextStyle(
+                                                      color: cs.onSurface,
+                                                      fontSize: 12)),
+                                              const SizedBox(width: 12),
+                                              Icon(Icons.favorite_outline,
+                                                  size: 14,
+                                                  color: cs.onSurfaceVariant),
+                                              const SizedBox(width: 4),
+                                              Text('${r.follows}',
+                                                  style: TextStyle(
+                                                      color: cs.onSurface,
+                                                      fontSize: 12)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            r.intro,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                color: cs.onSurfaceVariant,
+                                                fontSize: 12,
+                                                height: 1.3),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ));
+                }),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

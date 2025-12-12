@@ -34,6 +34,24 @@ dependencies:
   image_picker_macos: ^0.2.2
 
   flutter_launcher_icons: "^0.14.4"
+  cached_network_image: ^3.3.1
+
+
+  pointycastle: ^3.6.2
+  encrypt: ^5.0.3
+  asn1lib: ^1.0.0
+  crypto_keys: ^0.3.0+1
+  fast_rsa: ^3.8.5
+
+  crypto: ^3.0.3
+  web_socket_channel: ^3.0.3
+  dio: ^5.0.0 # 请使用最新版本
+  uuid: ^4.4.2
+
+  retry: ^3.1.0
+  basic_utils: ^5.7.0
+  http: ^1.6.0
+  characters: ^1.3.0
 
 
 dev_dependencies:

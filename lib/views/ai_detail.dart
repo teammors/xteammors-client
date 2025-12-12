@@ -14,11 +14,13 @@ class AiDetailPage extends StatefulWidget {
   final AiDetailViewModel vm;
   final void Function(ChatViewModel)? onOpenChatWithRobot;
   final void Function(ChatViewModel)? onOpenChatWithOwner;
+  final void Function()? onBack;
   const AiDetailPage(
       {super.key,
       required this.vm,
       this.onOpenChatWithRobot,
-      this.onOpenChatWithOwner});
+      this.onOpenChatWithOwner,
+      this.onBack});
 
   @override
   State<AiDetailPage> createState() => _AiDetailPageState();
@@ -37,7 +39,15 @@ class _AiDetailPageState extends State<AiDetailPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.vm.name)),
+      appBar: AppBar(
+        title: Text(widget.vm.name),
+        leading: _isDesktop
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              )
+            : null,
+      ),
       body: ListView(
         children: [
           Padding(
