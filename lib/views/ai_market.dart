@@ -44,7 +44,8 @@ class _NoBarSlowScrollBehavior extends ScrollBehavior {
   }
 }
 
-class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClientMixin {
+class _AiMarketPageState extends State<AiMarketPage>
+    with AutomaticKeepAliveClientMixin {
   final Set<String> _selectedCats = {};
   final Set<int> _hoveredItems = {};
   final Set<int> _hoveredBanners = {};
@@ -163,7 +164,6 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
 
   @override
   Widget build(BuildContext context) {
-
     super.build(context); // 必须调用
 
     final cs = Theme.of(context).colorScheme;
@@ -180,7 +180,7 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
           padding: const EdgeInsets.all(15),
           children: [
             SizedBox(
-              height: 200,
+              height: 250,
               child: _isDesktop
                   ? ListView.separated(
                       scrollDirection: Axis.horizontal,
@@ -231,7 +231,7 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
                                     children: [
                                       SizedBox(
                                         width: 500,
-                                        height: 200,
+                                        height: 250,
                                         child: Image.network(
                                           r.bannerUrl,
                                           fit: BoxFit.cover,
@@ -450,7 +450,7 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
                       },
                     ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 25),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -460,19 +460,19 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
                 '其他',
               ].map((cat) {
                 final selected = _selectedCats.contains(cat);
-                final base = _categoryColor(cat);
-                final color = base;
-                final bg = base.withValues(alpha: selected ? 0.24 : 0.16);
+                final base = Theme.of(context).colorScheme.primary;
+                final color = selected ? Colors.white : base;
+                final bg = selected ? base : base.withValues(alpha: 0.12);
                 return InkWell(
                   onTap: () => _toggleCategory(cat),
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                     decoration: BoxDecoration(
                       color: bg,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: base.withValues(alpha: selected ? 0.9 : 0.5),
+                        color: base.withValues(alpha: selected ? 0.9 : 0.4),
                       ),
                     ),
                     child:
@@ -481,7 +481,7 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
                 );
               }).toList(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 25),
             TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _searchQuery = v.trim()),
@@ -501,23 +501,23 @@ class _AiMarketPageState extends State<AiMarketPage> with AutomaticKeepAliveClie
                 filled: true,
                 fillColor: cs.surfaceContainerHighest,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.4)),
+                      color: cs.outlineVariant.withValues(alpha: 0.1)),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.4)),
+                      color: cs.outlineVariant.withValues(alpha: 0.1)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide:
-                      BorderSide(color: cs.primary.withValues(alpha: 0.6)),
+                      BorderSide(color: cs.primary.withValues(alpha: 0.1)),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             LayoutBuilder(builder: (context, constraints) {
               final double spacing = 12;
               final int crossAxisCount = 3;
