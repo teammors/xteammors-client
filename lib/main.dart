@@ -8,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:xteammors/utils/camera_delegate.dart';
 import 'package:xteammors/utils/message_helper.dart';
 import 'package:xteammors/utils/teammors_log.dart';
-import 'package:xteammors/views/settings/my_followed_ai.dart';
 import 'package:xteammors/websocket/im_client_helper.dart';
 
 import 'views/messages_page.dart';
@@ -24,10 +23,11 @@ import 'viewmodels/chat_viewmodel.dart';
 import 'views/settings/theme_settings_page.dart';
 import 'views/settings/security_privacy_page.dart';
 import 'views/settings/account_management_page.dart';
-import 'views/settings/my_robot_management.dart';
 import 'viewmodels/theme_viewmodel.dart';
 import 'views/user_profile_page.dart';
 import 'viewmodels/user_profile_viewmodel.dart';
+import 'views/my_followed_robot.dart';
+import 'viewmodels/my_followed_robot_viewmodel.dart';
 import 'viewmodels/contacts_viewmodel.dart';
 import 'data/app_database.dart';
 import 'views/group_profile_page.dart';
@@ -355,13 +355,9 @@ class _MainShellState extends State<MainShell> {
         );
       case 2:
         if (_isDesktop) {
-          return MyFollowedAIListPage(
-            onOpenDetail: (detailVm) => setState(
-              () => _rightPane = _aiDetailPane(detailVm),
-            ),
-          );
+          return _aiFollowedPane();
         }
-        return const AiMarketPage(viewModel: AiMarketViewModel());
+        return const MyFollowedRobotPage();
       case 3:
         return SettingsPage(
           onOpenThemeSettings: _isDesktop
@@ -377,10 +373,16 @@ class _MainShellState extends State<MainShell> {
               ? () => setState(() => _rightPane = const AccountManagementPage())
               : null,
           onOpenMyAIBot: _isDesktop
-              ? () => setState(() => _rightPane = MyRobotManagementPage())
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'My AI Bot',
+                    description: 'Configure AI assistant preferences.',
+                  ))
               : null,
           onOpenFollowedRobots: _isDesktop
-              ? () => setState(() => _rightPane = const MyFollowedAIListPage())
+              ? () => setState(() => _rightPane = const SettingsDetailPage(
+                    title: 'The Robots I Follow',
+                    description: 'View the robots I follow.',
+                  ))
               : null,
           onOpenFavorites: _isDesktop
               ? () => setState(() => _rightPane = const SettingsDetailPage(
@@ -431,6 +433,30 @@ class _MainShellState extends State<MainShell> {
     return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
   }
 
+  Widget _aiFollowedPane() {
+    return MyFollowedRobotPage(
+      viewModel: const MyFollowedRobotViewModel(),
+      onOpenRobot: (robot) => setState(
+        () => _rightPane = _aiDetailPane(
+          AiDetailViewModel(
+            name: robot.name,
+            category: 'Followed',
+            bannerUrl: robot.avatarUrl,
+            avatarUrl: robot.avatarUrl,
+            intro: robot.description,
+            scenarios: '',
+            websiteUrl: '',
+            views: 0,
+            follows: 0,
+            media: [],
+            owner: const AiOwnerSummary(name: 'Unknown'),
+          ),
+        ),
+      ),
+      onOpenMarket: () => setState(() => _rightPane = _aiMarketPane()),
+    );
+  }
+
   Widget _aiMarketPane() {
     return AiMarketPage(
       viewModel: const AiMarketViewModel(),
@@ -449,7 +475,6 @@ class _MainShellState extends State<MainShell> {
       onOpenChatWithOwner: (chatVm) => setState(
         () => _rightPane = ChatPage(viewModel: chatVm),
       ),
-      onBack: () => setState(() => _rightPane = _aiMarketPane()),
     );
   }
 

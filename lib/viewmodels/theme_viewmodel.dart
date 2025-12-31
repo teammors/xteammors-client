@@ -44,19 +44,17 @@ class ThemeViewModel {
 
   static Future<void> saveTheme(AppTheme theme) async {
     final p = await SharedPreferences.getInstance();
-    String v;
     switch (theme) {
       case AppTheme.dark:
-        v = 'dark';
+        await p.setString(cacheKey, 'dark');
         break;
       case AppTheme.light:
-        v = 'light';
+        await p.setString(cacheKey, 'light');
         break;
       case AppTheme.system:
-        v = 'system';
+        await p.setString(cacheKey, 'system');
         break;
     }
-    await p.setString(cacheKey, v);
   }
 
   static Future<AppTheme?> loadTheme() async {

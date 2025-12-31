@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:drift/drift.dart';
-import 'connection/connection.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 part 'app_database.g.dart';
 
@@ -91,7 +94,15 @@ class Groups extends Table {
 @DriftDatabase(tables: [Messages, Contacts, Groups])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
-  factory AppDatabase.makeDefault() => AppDatabase(defaultExecutor());
+  static LazyDatabase _openConnection() {
+    return LazyDatabase(() async {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dir.path, 'xteammors.db'));
+      return NativeDatabase.createInBackground(file);
+    });
+  }
+
+  factory AppDatabase.makeDefault() => AppDatabase(_openConnection());
   @override
   int get schemaVersion => 1;
 

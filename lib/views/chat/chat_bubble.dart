@@ -61,8 +61,7 @@ class ChatBubble extends StatelessWidget {
     final showAvatar = !isMe && chatType == ChatType.group;
 
     return GestureDetector(
-      onLongPressStart: (details) =>
-          onShowMenu(context, details.globalPosition),
+      onLongPress: () => onShowMenu(context, null),
       onDoubleTap: () => _handleDoubleTap(context),
       onSecondaryTapDown: (details) =>
           onShowMenu(context, details.globalPosition),
@@ -99,7 +98,7 @@ class ChatBubble extends StatelessWidget {
                   children: [
                     if (showAvatar && message.senderName != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 0, bottom: 2),
+                        padding: const EdgeInsets.only(left: 8, bottom: 2),
                         child: Text(
                           message.senderName!,
                           style: TextStyle(
@@ -120,16 +119,16 @@ class ChatBubble extends StatelessWidget {
                           color: bubbleColor,
                           borderRadius: isMe
                               ? BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
+                                  topLeft: Radius.circular(8),
+                                  topRight: Radius.circular(8),
+                                  bottomLeft: Radius.circular(8),
                                   bottomRight: Radius.zero, // 右下角保持直角
                                 )
                               : BorderRadius.only(
                                   topLeft: Radius.zero,
-                                  topRight: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                  bottomRight: Radius.circular(10))),
+                                  topRight: Radius.circular(8),
+                                  bottomLeft: Radius.circular(8),
+                                  bottomRight: Radius.circular(8))),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -227,16 +226,16 @@ class ChatBubble extends StatelessWidget {
           final img = ClipRRect(
             borderRadius: isMe
                 ? BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
                     bottomRight: Radius.zero, // 右下角保持直角
                   )
                 : BorderRadius.only(
                     topLeft: Radius.zero,
-                    topRight: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10)),
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8)),
             child: SizedBox(
               width: rw,
               height: rh,

@@ -6,11 +6,10 @@ import '../viewmodels/user_profile_viewmodel.dart';
 class ContactsPage extends StatefulWidget {
   final ContactsViewModel viewModel;
   final void Function(Contact)? onOpenProfile;
-  const ContactsPage({
-    super.key,
-    this.viewModel = const ContactsViewModel(),
-    this.onOpenProfile,
-  });
+  const ContactsPage(
+      {super.key,
+      this.viewModel = const ContactsViewModel(),
+      this.onOpenProfile});
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -58,17 +57,15 @@ class _ContactsPageState extends State<ContactsPage> {
             child: Text(
               'Contacts',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
         ),
-        SizedBox(height: 10,),
-        Container(
-          height: 55,
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search contacts',
@@ -92,33 +89,39 @@ class _ContactsPageState extends State<ContactsPage> {
             ),
           ),
         ),
-        SizedBox(
-          height: 10,
-        ),
         Expanded(
           child: ListView.separated(
             itemCount: list.length,
             separatorBuilder: (c, i) => Divider(
                 height: 1,
-                indent: 78,
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
             itemBuilder: (c, i) {
               final ct = list[i];
               final hovered = _hoverIndex == i;
               return MouseRegion(
                 onEnter: (_) => setState(() => _hoverIndex = i),
                 onExit: (_) => setState(() => _hoverIndex = null),
-                child: InkWell(
-                  onTap: () {
-                    if (widget.onOpenProfile != null) {
-                      widget.onOpenProfile!(ct);
-                    } else {
+                child: Container(
+                  color: hovered
+                      ? cs.primary.withValues(alpha: 0.06)
+                      : Colors.transparent,
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: _buildAvatar(ct),
+                    title: Text(ct.name,
+                        style: TextStyle(fontSize: 16, color: cs.onSurface)),
+                    subtitle: _buildSubtitle(ct, cs),
+                    onTap: () {
+                      if (widget.onOpenProfile != null) {
+                        widget.onOpenProfile!(ct);
+                        return;
+                      }
                       final vm = UserProfileViewModel(
                         userId: ct.id,
                         name: ct.name,
                         avatarUrl: ct.avatarUrl,
-                        bio:
-                            'This person is very mysterious; he left nothing behind.',
+                        bio: '这个人很神秘，什么都没有留下',
                         online: ct.online,
                         sharedGroups: const [
                           GroupSummary(
@@ -133,46 +136,7 @@ class _ContactsPageState extends State<ContactsPage> {
                         MaterialPageRoute(
                             builder: (_) => UserProfilePage(vm: vm)),
                       );
-                    }
-                  },
-                  child: Container(
-                    height: 65,
-                    color: hovered
-                        ? cs.primary.withValues(alpha: 0.06)
-                        : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
-                      children: [
-                        // 头像
-                        Padding(
-                          padding: const EdgeInsets.only(right: 15),
-                          child: _buildAvatar(ct),
-                        ),
-                        // 姓名和状态
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ct.name,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.0,
-                                  color: cs.onSurface,
-                                ),
-                              ),
-                              SizedBox(
-                                height: 3,
-                              ),
-                              _buildSubtitle(ct, cs),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    },
                   ),
                 ),
               );
@@ -185,37 +149,22 @@ class _ContactsPageState extends State<ContactsPage> {
 
   Widget _buildAvatar(Contact c) {
     if (c.avatarUrl != null && c.avatarUrl!.isNotEmpty) {
-      return ClipOval(
-        child: Image.network(
-          c.avatarUrl!,
-          width: 48,
-          height: 48,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return CircleAvatar(
-              radius: 24,
-              child: Text(c.name.isNotEmpty ? c.name[0] : '?'),
-            );
-          },
-        ),
-      );
+      return CircleAvatar(
+          backgroundImage: NetworkImage(c.avatarUrl!), radius: 20);
     }
     return CircleAvatar(
-      radius: 24,
-      child: Text(c.name.isNotEmpty ? c.name[0] : '?'),
-    );
+        radius: 20, child: Text(c.name.isNotEmpty ? c.name[0] : '?'));
   }
 
   Widget _buildSubtitle(Contact c, ColorScheme cs) {
     if (c.online) {
       return Text('Online',
-          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 14));
+          style: TextStyle(color: const Color(0xFF1DB954), fontSize: 12));
     }
     final ls = c.lastSeen;
     if (ls == null) {
       return Text('last seen unknown',
-          style: TextStyle(
-              color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12));
     }
     final now = DateTime.now();
     String text;
@@ -228,7 +177,6 @@ class _ContactsPageState extends State<ContactsPage> {
           'last seen ${ls.year}-${ls.month.toString().padLeft(2, '0')}-${ls.day.toString().padLeft(2, '0')}';
     }
     return Text(text,
-        style: TextStyle(
-            color: cs.onSurfaceVariant.withOpacity(0.6), fontSize: 14));
+        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12));
   }
 }

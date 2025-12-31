@@ -4,8 +4,8 @@ import '../../utils/toast_utils.dart';
 
 class MyRobotManagementPage extends StatefulWidget {
   final MyRobotManagementViewModel viewModel;
-  MyRobotManagementPage({super.key, MyRobotManagementViewModel? viewModel})
-      : viewModel = viewModel ?? MyRobotManagementViewModel();
+  const MyRobotManagementPage(
+      {super.key, this.viewModel = const MyRobotManagementViewModel()});
 
   @override
   State<MyRobotManagementPage> createState() => _MyRobotManagementPageState();
@@ -73,39 +73,26 @@ class _RobotItem extends StatelessWidget {
       children: [
         ListTile(
           leading: _avatar(robot.avatarUrl),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+          title: Row(
             children: [
-              Text(
-                robot.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  robot.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  _CategoryChip(label: robot.category),
-                  const SizedBox(width: 8),
-                  _StatusChip(status: robot.status),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                robot.intro,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
+              const SizedBox(width: 8),
+              _CategoryChip(label: robot.category),
+              const SizedBox(width: 8),
+              _StatusChip(status: robot.status),
             ],
           ),
+          subtitle: const Text('机器人'),
           trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -130,21 +117,10 @@ class _RobotItem extends StatelessWidget {
   }
 
   Widget _avatar(String? url) {
-    const double size = 50;
-    Widget child;
     if (url != null && url.isNotEmpty) {
-      child = Image.network(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (c, e, s) => const Icon(Icons.smart_toy_outlined),
-      );
-    } else {
-      child = const Icon(Icons.smart_toy_outlined);
+      return const CircleAvatar(radius: 22);
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: SizedBox(width: size, height: size, child: Center(child: child)),
-    );
+    return const CircleAvatar(radius: 22, child: Icon(Icons.smart_toy_outlined));
   }
 }
 

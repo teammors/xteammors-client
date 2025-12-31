@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'dart:ui' show Color;
 
 enum ReadMark { singleGrey, doubleGreen }
-
 enum RetentionPolicy { hour1, week2, month3 }
 
 @immutable
@@ -16,8 +15,8 @@ class MessageSummary {
   final String? retentionLabel;
   final Color? retentionColor;
   final bool isGroup;
-  final int unreadCount;
   final String? avatarUrl;
+  final int unreadCount;
   const MessageSummary({
     required this.name,
     required this.message,
@@ -28,8 +27,8 @@ class MessageSummary {
     this.retentionLabel,
     this.retentionColor,
     this.isGroup = false,
-    this.unreadCount = 0,
     this.avatarUrl,
+    this.unreadCount = 0,
   });
 }
 
@@ -48,12 +47,10 @@ class MessagesViewModel {
         retentionLabel: 'H',
         retentionColor: const Color(0xFFC95332),
         isGroup: false,
-        unreadCount: 2,
-        avatarUrl: 'https://i.pravatar.cc/150?img=3',
       ),
       MessageSummary(
         name: 'Bob',
-        message: 'Can you review the doc?New mockups are ready',
+        message: 'Can you review the doc?',
         time: '13:21',
         mark: ReadMark.singleGrey,
         isOnline: false,
@@ -61,8 +58,6 @@ class MessagesViewModel {
         retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
         isGroup: false,
-        unreadCount: 5,
-        avatarUrl: 'https://i.pravatar.cc/150?img=7',
       ),
       MessageSummary(
         name: 'Charlie',
@@ -74,8 +69,6 @@ class MessagesViewModel {
         retentionLabel: 'M',
         retentionColor: const Color(0xFFF2D863),
         isGroup: false,
-        unreadCount: 0,
-        avatarUrl: 'https://i.pravatar.cc/150?img=12',
       ),
       MessageSummary(
         name: 'Design Team',
@@ -87,8 +80,6 @@ class MessagesViewModel {
         retentionLabel: 'W',
         retentionColor: const Color(0xFFC97132),
         isGroup: true,
-        unreadCount: 12,
-        avatarUrl: 'https://i.pravatar.cc/150?img=24',
       ),
     ],
   });

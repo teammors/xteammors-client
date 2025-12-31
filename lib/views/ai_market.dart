@@ -460,9 +460,9 @@ class _AiMarketPageState extends State<AiMarketPage>
                 '其他',
               ].map((cat) {
                 final selected = _selectedCats.contains(cat);
-                final base = Theme.of(context).colorScheme.primary;
-                final color = selected ? Colors.white : base;
-                final bg = selected ? base : base.withValues(alpha: 0.12);
+                final base = _categoryColor(cat);
+                final color = base;
+                final bg = base.withValues(alpha: selected ? 0.24 : 0.16);
                 return InkWell(
                   onTap: () => _toggleCategory(cat),
                   child: Container(
@@ -472,7 +472,7 @@ class _AiMarketPageState extends State<AiMarketPage>
                       color: bg,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: base.withValues(alpha: selected ? 0.9 : 0.4),
+                        color: base.withValues(alpha: selected ? 0.9 : 0.5),
                       ),
                     ),
                     child:
@@ -602,7 +602,11 @@ class _AiMarketPageState extends State<AiMarketPage>
                                                 fontWeight: FontWeight.w600),
                                           ),
                                           const SizedBox(height: 6),
-                                          Row(
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
                                             children: [
                                               Container(
                                                 padding:
@@ -625,24 +629,34 @@ class _AiMarketPageState extends State<AiMarketPage>
                                                       fontSize: 11),
                                                 ),
                                               ),
-                                              const SizedBox(width: 10),
-                                              Icon(Icons.visibility,
-                                                  size: 14,
-                                                  color: cs.onSurfaceVariant),
-                                              const SizedBox(width: 4),
-                                              Text('${r.views}',
-                                                  style: TextStyle(
-                                                      color: cs.onSurface,
-                                                      fontSize: 12)),
-                                              const SizedBox(width: 12),
-                                              Icon(Icons.favorite_outline,
-                                                  size: 14,
-                                                  color: cs.onSurfaceVariant),
-                                              const SizedBox(width: 4),
-                                              Text('${r.follows}',
-                                                  style: TextStyle(
-                                                      color: cs.onSurface,
-                                                      fontSize: 12)),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.visibility,
+                                                      size: 14,
+                                                      color:
+                                                          cs.onSurfaceVariant),
+                                                  const SizedBox(width: 4),
+                                                  Text('${r.views}',
+                                                      style: TextStyle(
+                                                          color: cs.onSurface,
+                                                          fontSize: 12)),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.favorite_outline,
+                                                      size: 14,
+                                                      color:
+                                                          cs.onSurfaceVariant),
+                                                  const SizedBox(width: 4),
+                                                  Text('${r.follows}',
+                                                      style: TextStyle(
+                                                          color: cs.onSurface,
+                                                          fontSize: 12)),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 8),

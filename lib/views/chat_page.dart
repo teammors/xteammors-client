@@ -59,6 +59,9 @@ class _ChatPageState extends State<ChatPage> {
   final LayerLink _emojiLayerLink = LayerLink();
   OverlayEntry? _emojiOverlay;
 
+
+  late ImageProvider _backgroundImage;
+
   void _openGroupProfile() {
     if (widget.viewModel.chatType != ChatType.group) return;
     const sample = GroupProfileViewModel.sample();
@@ -116,6 +119,10 @@ class _ChatPageState extends State<ChatPage> {
         } catch (_) {}
       }
     });
+
+
+
+
   }
 
   Future<void> _togglePlayVoice(int index) async {
@@ -524,8 +531,12 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    _backgroundImage = AssetImage(
+        isDark ? 'assets/images/mob_light.jpg' : 'assets/images/des_light.jpeg'
+    );
+
     return Scaffold(
-      //backgroundColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
       appBar: AppBar(
         elevation: 0,
         backgroundColor:
@@ -763,8 +774,7 @@ class _ChatPageState extends State<ChatPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color:
-                    isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
                 border: Border(
                   bottom: BorderSide(
                     color:
@@ -813,8 +823,8 @@ class _ChatPageState extends State<ChatPage> {
             child: GestureDetector(
               onTap: _clearSelection,
               child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+                // decoration: BoxDecoration(
+                  // color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
                   // image: DecorationImage(
                   //   image: NetworkImage(
                   //       isDark
@@ -823,6 +833,15 @@ class _ChatPageState extends State<ChatPage> {
                   //   ),
                   //   fit: BoxFit.cover,
                   // ),
+                // ),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: _backgroundImage,
+                    fit: BoxFit.cover, // 根据需要调整
+                    // BoxFit.fill: 填充整个区域（可能变形）
+                    // BoxFit.cover: 覆盖整个区域（保持比例）
+                    // BoxFit.contain: 完整显示图片
+                  ),
                 ),
                 child: ScrollConfiguration(
                   behavior: ScrollConfiguration.of(context)

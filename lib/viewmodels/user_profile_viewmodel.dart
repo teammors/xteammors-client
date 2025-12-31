@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart';
 class GroupSummary {
   final String id;
   final String name;
-  final String? avatarUrl;
   final int members;
+  final String? avatarUrl;
   const GroupSummary({
     required this.id,
     required this.name,
-    this.avatarUrl,
     required this.members,
+    this.avatarUrl,
   });
 }
 
@@ -23,7 +23,6 @@ class UserProfileViewModel {
   final bool online;
   final bool blocked;
   final List<GroupSummary> sharedGroups;
-
   const UserProfileViewModel({
     required this.userId,
     required this.name,
@@ -36,28 +35,14 @@ class UserProfileViewModel {
 
   const UserProfileViewModel.sample()
       : userId = 'u_001',
-        name = 'Alice Johnson',
-        avatarUrl = 'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
-        bio = 'Mobile developer. Coffee lover. Building delightful chat UIs.',
+        name = 'Alice',
+        avatarUrl = 'https://i.pravatar.cc/150?img=3',
+        bio = '这个人很神秘，什么都没有留下',
         online = true,
         blocked = false,
         sharedGroups = const [
-          GroupSummary(
-            id: 'g1',
-            name: 'Flutter Devs',
-            avatarUrl:
-                'https://avatars.githubusercontent.com/u/14101776?s=200&v=4',
-            members: 128,
-          ),
-          GroupSummary(
-            id: 'g2',
-            name: 'Design Weekly',
-            members: 42,
-          ),
-          GroupSummary(
-            id: 'g3',
-            name: 'Project X Team',
-            members: 16,
-          ),
+          GroupSummary(id: 'g1', name: 'Flutter Devs', members: 128),
+          GroupSummary(id: 'g2', name: 'Design Weekly', members: 42),
+          GroupSummary(id: 'g3', name: 'Project X Team', members: 16),
         ];
 }
