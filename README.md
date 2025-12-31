@@ -114,4 +114,4 @@ Below are example screenshots from the project:
 
 ## 📝 License
 
-[Add License Information Here]
+The project consents the MIT license.
