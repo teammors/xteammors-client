@@ -107,7 +107,7 @@ class ChatViewModel {
   // 私聊示例
   factory ChatViewModel.privateChat() {
     return ChatViewModel(
-      partnerName: "刘锁",
+      partnerName: "克里斯",
       lastSeen: 'last seen yesterday at 23:10',
       chatType: ChatType.private,
       messages: [
