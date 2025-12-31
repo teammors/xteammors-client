@@ -84,10 +84,10 @@ class _XteammorsAppState extends State<XteammorsApp> implements ThemeSetter {
     _prepareDb();
     _bootstrapTheme();
 
-    // 初始化IM客户端
-    MessageHelper.getInstance().init();
-    ImClientHelper.getInstance().initImClient();
-    TeammorsLogUtils.tlog("IM客户端初始化完成");
+    // 初始化IM客户端,参数配置之后开启
+    //MessageHelper.getInstance().init();
+    //ImClientHelper.getInstance().initImClient();
+    //TeammorsLogUtils.tlog("IM客户端初始化完成");
   }
 
   Future<void> _bootstrapTheme() async {

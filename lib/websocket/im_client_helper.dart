@@ -21,12 +21,13 @@ class ImClientHelper {
   }
 
   initImClient() {
+
     TeammorsLogUtils.tlog("ImClientHelper: 开始初始化IM客户端");
 
-    ParametersManager.getInstance().fromUid = "3000_2114";
-    ParametersManager.getInstance().imIPAndPort = "ws://180.184.30.76:9922";
-    ParametersManager.getInstance().imTokem = "CBDZLYqodk0dSam0kHi6cGcfxFV7GAyK";
-    ParametersManager.getInstance().deviceId = "F0DAA226-C2DB-5E75-8EB0-CF46B03C2F7C";
+    ParametersManager.getInstance().fromUid = "...";
+    ParametersManager.getInstance().imIPAndPort = "ws://...";
+    ParametersManager.getInstance().imTokem = "...";
+    ParametersManager.getInstance().deviceId = "...";
 
     ParametersManager.getInstance().needACK = "1000001,5000004";
     ParametersManager.getInstance().platform = "App";
