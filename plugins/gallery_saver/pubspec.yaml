@@ -1,0 +1,23 @@
+name: gallery_saver
+description: Local override of gallery_saver plugin with AGP8 namespace fix.
+version: 2.3.2+local
+
+environment:
+  sdk: '>=2.12.0 <4.0.0'
+  flutter: '>=3.7.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.1.3
+  http: ^1.6.0
+  path: ^1.8.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: carnegietechnologies.gallery_saver
+        pluginClass: GallerySaverPlugin
+      ios:
+        pluginClass: GallerySaverPlugin
